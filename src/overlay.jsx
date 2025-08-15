@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, LogicalPosition } from "@tauri-apps/api/dpi";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Mic, MicOff, EyeOff, Home, ChevronRight, ChevronLeft } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import "./overlay.css";
 
@@ -14,6 +14,8 @@ function Overlay() {
     });
     const [isVisible, setIsVisible] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pillRef = useRef(null);
 
     useEffect(() => {
@@ -126,49 +128,94 @@ function Overlay() {
             ref={pillRef}
             className={`toolbar ${isExpanded ? "expanded" : ""}`}
         >
-            {/* Drag handle with grip dots */}
+            {/* Drag handle */}
             <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
                 <GripVertical size={16} />
             </div>
 
             {!isExpanded ? (
                 <>
+                    {/* Recording indicator (green when recording, red when idle) */}
                     <span
-                        className={`status-indicator ${meetingState.in_meeting ? "active" : ""
-                            }`}
-                        aria-label={meetingState.in_meeting ? "In meeting" : "No meeting"}
+                        className={`status-indicator ${isRecording ? "active" : ""}`}
+                        aria-label={isRecording ? "Recording" : "Idle"}
                     />
-                    <span className="meeting-status">
-                        {meetingState.in_meeting ? "In Meeting" : "No Meeting"}
-                    </span>
+
+                    {/* Record toggle */}
+                    <button
+                        className={`icon-btn ${isRecording ? "ok" : "warn"}`}
+                        title={isRecording ? "Stop recording" : "Start recording"}
+                        onClick={() => setIsRecording((v) => !v)}
+                    >
+                        {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
+                    </button>
+
+                    {/* Hide overlay */}
+                    <button className="icon-btn" title="Hide overlay" onClick={hideOverlay}>
+                        <EyeOff size={16} />
+                    </button>
+
+                    {/* Home placeholder menu */}
+                    <div className="menu-wrapper">
+                        <button
+                            className="icon-btn"
+                            title="Home"
+                            aria-haspopup="menu"
+                            aria-expanded={isMenuOpen}
+                            onClick={() => setIsMenuOpen((o) => !o)}
+                        >
+                            <Home size={16} />
+                        </button>
+                        {isMenuOpen && (
+                            <div className="menu" role="menu">
+                                <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
+                                <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
+                                <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Expand button */}
                     <button className="icon-btn" title="Expand" onClick={toggleExpanded}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill="currentColor" d="M9 6l6 6-6 6" />
-                        </svg>
+                        <ChevronRight size={16} />
                     </button>
                 </>
             ) : (
                 <>
-                    <span
-                        className={`status-indicator ${meetingState.in_meeting ? "active" : ""
-                            }`}
-                        aria-label={meetingState.in_meeting ? "In meeting" : "No meeting"}
-                    />
-                    <div className="meeting-info">
-                        <span className="meeting-status">
-                            {meetingState.meeting_title || "Meeting Active"}
-                        </span>
-                    </div>
-                    <button className="btn primary">Listen</button>
-
-                    <button className="btn">Ask Question</button>
-                    <button className="btn" onClick={hideOverlay}>
-                        Hide
+                    {/* Recording with label */}
+                    <button
+                        className={`btn primary ${isRecording ? "ok" : "warn"}`}
+                        title={isRecording ? "Stop recording" : "Start recording"}
+                        onClick={() => setIsRecording((v) => !v)}
+                    >
+                        {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
+                        <span style={{ marginLeft: 6 }}>{isRecording ? "Stop" : "Listen"}</span>
                     </button>
+
+                    {/* Hide with label */}
+                    <button className="btn" onClick={hideOverlay}>
+                        <EyeOff size={16} />
+                        <span style={{ marginLeft: 6 }}>Hide</span>
+                    </button>
+
+                    {/* Home with menu */}
+                    <div className="menu-wrapper">
+                        <button className="btn" onClick={() => setIsMenuOpen((o) => !o)}>
+                            <Home size={16} />
+                            <span style={{ marginLeft: 6 }}>Home</span>
+                        </button>
+                        {isMenuOpen && (
+                            <div className="menu" role="menu">
+                                <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
+                                <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
+                                <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Collapse */}
                     <button className="icon-btn" title="Collapse" onClick={toggleExpanded}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill="white" d="M15 6l-6 6 6 6" />
-                        </svg>
+                        <ChevronLeft size={16} />
                     </button>
                 </>
             )}

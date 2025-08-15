@@ -97,6 +97,14 @@ body {
     background: #1a73e8;
 }
 
+.toolbar .btn.warn {
+    background: #e81a1a;
+}
+
+.toolbar .btn.ok {
+    background: #1aae49;
+}
+
 .toolbar .btn.primary:hover {
     background: #1669c1;
 }
@@ -120,6 +128,47 @@ body {
 
 .toolbar .icon-btn:hover {
     background: rgba(255, 255, 255, 0.18);
+}
+
+.toolbar .icon-btn.warn {
+    background: rgba(232, 26, 26, 0.25);
+}
+
+.toolbar .icon-btn.ok {
+    background: rgba(26, 174, 73, 0.25);
+}
+
+/* Simple menu */
+.menu-wrapper {
+    position: relative;
+}
+
+.menu {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    background: rgba(30, 30, 30, 0.98);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    min-width: 160px;
+    z-index: 10;
+}
+
+.menu .menu-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.menu .menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* Make buttons clickable (non-draggable) */
