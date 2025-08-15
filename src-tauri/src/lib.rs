@@ -1,30 +1,20 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+// Learn more at https://tauri.app/develop/calling-rust/
 
-use sysinfo::System;
-use tauri::Emitter;
-use tauri::Manager;
+use std::sync::{Arc, Mutex};
+use tauri::{Emitter, Manager};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-#[tauri::command]
-fn is_zoom_running() -> bool {
-    let mut sys = System::new_all();
-    sys.refresh_all();
-
-    sys.processes().values().any(|p| {
-        p.name()
-            .to_string_lossy() // convert OsString to String
-            .to_ascii_lowercase() // lowercase
-            .contains("zoom") // check if it contains "zoom"
-    })
+#[derive(Debug, Clone, serde::Serialize)]
+struct MeetingState {
+    in_meeting: bool,
+    meeting_title: Option<String>,
 }
 
-#[tauri::command]
-fn check_zoom(app_handle: tauri::AppHandle) {
-    let zoom_running = is_zoom_running(); // call your existing function
+type SharedMeetingState = Arc<Mutex<MeetingState>>;
 
-    // send event to overlay window
-    if let Some(overlay) = app_handle.get_webview_window("overlay") {
-        overlay.emit("zoom-status", zoom_running).unwrap();
-    }
+#[tauri::command]
+fn get_meeting_state(state: tauri::State<SharedMeetingState>) -> MeetingState {
+    state.lock().unwrap().clone()
 }
 
 #[tauri::command]
@@ -35,25 +25,50 @@ fn greet(name: &str) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            let handle = app.handle(); // get AppHandle from App
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    if event.state == ShortcutState::Pressed
+                        && shortcut.matches(Modifiers::CONTROL, Code::KeyM)
+                    {
+                        let state = app.state::<SharedMeetingState>();
+                        let mut guard = state.lock().unwrap();
+                        guard.in_meeting = !guard.in_meeting;
+                        guard.meeting_title = guard.in_meeting.then(|| "Manual Meeting".into());
 
-            // Show overlay window if it exists
-            if let Some(overlay) = handle.get_webview_window("overlay") {
-                overlay.show().unwrap();
+                        if let Some(overlay) = app.get_webview_window("overlay") {
+                            let _ = overlay.emit("meeting-state", &*guard);
+                            if guard.in_meeting {
+                                let _ = overlay.show();
+                            } else {
+                                let _ = overlay.hide();
+                            }
+                        }
+                        println!("Meeting toggled: {:?}", &*guard);
+                    }
+                })
+                .build(),
+        )
+        .manage(Arc::new(Mutex::new(MeetingState {
+            in_meeting: false,
+            meeting_title: None,
+        })))
+        .setup(|app| {
+            if let Some(overlay) = app.handle().get_webview_window("overlay") {
+                let _ = overlay.hide();
             }
 
-            // Spawn background thread to continuously check Zoom status
-            let bg_handle = handle.clone();
-            std::thread::spawn(move || loop {
-                crate::check_zoom(bg_handle.clone());
-                std::thread::sleep(std::time::Duration::from_secs(2));
-            });
-
+            // Register the global shortcut Ctrl+M to toggle overlay visibility
+            let gs = app.global_shortcut();
+            // Best-effort register; logs are enough for debugging failures
+            if let Err(e) = gs.register(Shortcut::new(Some(Modifiers::CONTROL), Code::KeyM)) {
+                println!("Failed to register Ctrl+M shortcut: {}", e);
+            } else {
+                println!("Registered global shortcut: Ctrl+M");
+            }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, is_zoom_running, check_zoom])
+        .invoke_handler(tauri::generate_handler![greet, get_meeting_state])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("Error running tauri application");
 }

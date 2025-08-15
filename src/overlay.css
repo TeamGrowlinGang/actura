@@ -28,6 +28,42 @@ body {
 
     /* Do NOT stretch to window size. Let content define size. */
     width: max-content;
+    transition: all 0.3s ease;
+}
+
+/* Expanded state */
+.toolbar.expanded {
+    padding: 8px 12px;
+    gap: 12px;
+}
+
+/* Status indicator */
+.status-indicator {
+    font-size: 12px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Meeting status text */
+.meeting-status {
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+}
+
+/* Meeting info container */
+.meeting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.meeting-info .meeting-status {
+    font-size: 12px;
+    opacity: 0.9;
 }
 
 /* Text buttons */

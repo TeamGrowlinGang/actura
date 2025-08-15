@@ -23,12 +23,15 @@
                 "title": "Overlay",
                 "width": 320,
                 "height": 44,
+                "minWidth": 200,
+                "minHeight": 40,
                 "alwaysOnTop": true,
                 "decorations": false,
                 "transparent": true,
                 "resizable": false,
                 "skipTaskbar": true,
                 "shadow": false,
+                "visible": false,
                 "url": "http://localhost:1420/overlay.html"
             }
         ]

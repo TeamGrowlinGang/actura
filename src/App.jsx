@@ -6,17 +6,20 @@ import "./App.css";
 function App() {
     const [greetMsg, setGreetMsg] = useState("");
     const [name, setName] = useState("");
-    const [zoomOpen, setZoomOpen] = useState(false);
+    const [meetingState, setMeetingState] = useState({
+        in_meeting: false,
+        meeting_title: null
+    });
 
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                const running = await invoke("is_zoom_running");
-                setZoomOpen(running);
+                const state = await invoke("get_meeting_state");
+                setMeetingState(state);
             } catch (e) {
                 console.error(e);
             }
-        }, 2000); // check every 2 seconds
+        }, 2000);
 
         return () => clearInterval(interval);
     }, []);
@@ -40,8 +43,11 @@ function App() {
                     <img src={reactLogo} className="logo react" alt="React logo" />
                 </a>
             </div>
-            <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-            <p>{zoomOpen ? "Zoom is open" : "Zoom is closed"}</p>
+
+            <p>
+                Meeting: {meetingState.in_meeting ? "Active" : "Not Active"}
+                {meetingState.meeting_title && <span> - {meetingState.meeting_title}</span>}
+            </p>
 
             <form
                 className="row"
