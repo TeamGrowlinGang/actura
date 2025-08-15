@@ -15,9 +15,12 @@ function Overlay() {
 
     return (
         <div className="overlay">
-            <p>{zoomOpen ? "Zoom is open" : "Zoom is closed"}</p>
-            <button>Start Recording</button>
+            <button className="primary">Listen</button>
+            <button>Ask question</button>
+            <button>Hide</button>
+            <button className="icon-btn">🏠</button>
         </div>
+
     );
 }
 
