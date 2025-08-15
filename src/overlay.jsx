@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, LogicalPosition } from "@tauri-apps/api/dpi";
+import { GripVertical } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import "./overlay.css";
 
@@ -124,37 +125,50 @@ function Overlay() {
             id="toolbar"
             ref={pillRef}
             className={`toolbar ${isExpanded ? "expanded" : ""}`}
-            data-tauri-drag-region
         >
+            {/* Drag handle with grip dots */}
+            <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
+                <GripVertical size={16} />
+            </div>
+
             {!isExpanded ? (
                 <>
-                    <div className="status-indicator">
-                        {meetingState.in_meeting ? "🟢" : "🔴"}
-                    </div>
+                    <span
+                        className={`status-indicator ${meetingState.in_meeting ? "active" : ""
+                            }`}
+                        aria-label={meetingState.in_meeting ? "In meeting" : "No meeting"}
+                    />
                     <span className="meeting-status">
                         {meetingState.in_meeting ? "In Meeting" : "No Meeting"}
                     </span>
                     <button className="icon-btn" title="Expand" onClick={toggleExpanded}>
-                        ⚡
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M9 6l6 6-6 6" />
+                        </svg>
                     </button>
                 </>
             ) : (
                 <>
-                    <div className="status-indicator">
-                        {meetingState.in_meeting ? "🟢" : "🔴"}
-                    </div>
+                    <span
+                        className={`status-indicator ${meetingState.in_meeting ? "active" : ""
+                            }`}
+                        aria-label={meetingState.in_meeting ? "In meeting" : "No meeting"}
+                    />
                     <div className="meeting-info">
                         <span className="meeting-status">
                             {meetingState.meeting_title || "Meeting Active"}
                         </span>
                     </div>
                     <button className="btn primary">Listen</button>
+
                     <button className="btn">Ask Question</button>
                     <button className="btn" onClick={hideOverlay}>
                         Hide
                     </button>
                     <button className="icon-btn" title="Collapse" onClick={toggleExpanded}>
-                        ◀
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="white" d="M15 6l-6 6 6 6" />
+                        </svg>
                     </button>
                 </>
             )}

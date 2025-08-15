@@ -31,6 +31,16 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Drag handle with grip dots */
+.drag-handle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    -webkit-app-region: drag;
+}
+
 /* Expanded state */
 .toolbar.expanded {
     padding: 8px 12px;
@@ -39,12 +49,15 @@ body {
 
 /* Status indicator */
 .status-indicator {
-    font-size: 12px;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background: #ff5353;
+    display: inline-block;
+}
+
+.status-indicator.active {
+    background: #29d44b;
 }
 
 /* Meeting status text */
