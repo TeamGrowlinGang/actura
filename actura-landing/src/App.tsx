@@ -2,9 +2,10 @@ import './index.css'
 import { Navbar } from './components/Navbar.tsx'
 import { Hero } from './components/Hero.tsx'
 import { BackgroundBlobs } from './components/BackgroundBlobs.tsx'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { Profile } from './pages/Profile.tsx'
 import { MeetingDetails } from './pages/MeetingDetails.tsx'
+import { UnderConstruction } from './pages/UnderConstruction.tsx'
 import { Footer } from './components/Footer.tsx'
 
 function App() {
@@ -19,6 +20,8 @@ function App() {
           <Route path="/" element={<Hero />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/meetings/:id" element={<MeetingDetails />} />
+          <Route path="/under-construction" element={<UnderConstruction />} />
+          <Route path="*" element={<Navigate to="/under-construction" replace />} />
         </Routes>
       </main>
       <Footer />

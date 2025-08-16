@@ -1,4 +1,5 @@
 import acturaMark from '../assets/logo inside navbar.png'
+import { Link } from 'react-router-dom'
 
 export function Navbar() {
   return (
@@ -14,11 +15,11 @@ export function Navbar() {
             />
           </div>
           <nav className="hidden md:flex items-center gap-9 lg:gap-10 text-base/6 lg:text-lg/7">
-            <a href="#" className="hover:opacity-90">Home</a>
-            <a href="#" className="hover:opacity-90">How it works</a>
-            <a href="#" className="hover:opacity-90">Why Actura?</a>
-            <a href="#" className="hover:opacity-90">Pricing</a>
-            <a href="#" className="hover:opacity-90">Contact</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="hover:opacity-90">Home</a>
+            <Link to="/under-construction" className="hover:opacity-90">How it works</Link>
+            <Link to="/under-construction" className="hover:opacity-90">Why Actura?</Link>
+            <Link to="/under-construction" className="hover:opacity-90">Pricing</Link>
+            <Link to="/under-construction" className="hover:opacity-90">Contact</Link>
           </nav>
         </div>
       </div>
