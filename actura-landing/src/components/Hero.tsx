@@ -6,33 +6,57 @@ import desktopImage from '../assets/desktop image.png'
 import { useEffect, useState } from 'react'
 
 export function Hero() {
-  const [typed, setTyped] = useState('')
-  const full = 'Your AI teammate\nwho never misses a task.'
+  const firstLine = 'Your AI teammate'
+  const phrases = [
+    'who never misses a task.',
+    'who summarises meetings.',
+    'who keeps you on track.',
+  ]
 
+  const [firstProgress, setFirstProgress] = useState(0)
+  const [secondProgress, setSecondProgress] = useState(0)
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Type the first line once
   useEffect(() => {
-    let i = 0
-    const interval = setInterval(() => {
-      i += 1
-      setTyped(full.slice(0, i))
-      if (i >= full.length) clearInterval(interval)
-    }, 20)
-    return () => clearInterval(interval)
-  }, [])
+    if (firstProgress >= firstLine.length) return
+    const t = setTimeout(() => setFirstProgress(firstProgress + 1), 20)
+    return () => clearTimeout(t)
+  }, [firstProgress])
+
+  // Cycle the second line indefinitely (type, pause, delete)
+  useEffect(() => {
+    if (firstProgress < firstLine.length) return
+    const current = phrases[phraseIndex]
+    const typingDelay = 38
+    const deletingDelay = 18
+    const pauseAtEnd = 1400
+
+    let t: number | undefined
+    if (!isDeleting && secondProgress < current.length) {
+      t = window.setTimeout(() => setSecondProgress(secondProgress + 1), typingDelay)
+    } else if (!isDeleting && secondProgress === current.length) {
+      t = window.setTimeout(() => setIsDeleting(true), pauseAtEnd)
+    } else if (isDeleting && secondProgress > 0) {
+      t = window.setTimeout(() => setSecondProgress(secondProgress - 1), deletingDelay)
+    } else if (isDeleting && secondProgress === 0) {
+      setIsDeleting(false)
+      setPhraseIndex((phraseIndex + 1) % phrases.length)
+    }
+    return () => { if (t) clearTimeout(t) }
+  }, [firstProgress, isDeleting, secondProgress, phraseIndex])
 
   return (
     <section className="relative hero-fade">
       <div className="site-container">
         <div className="mx-auto max-w-5xl px-6 pb-24 pt-20 text-center md:pt-28">
           <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-7xl font-[Futura,Inter,system-ui,Arial,sans-serif] fade-in-up">
-            {typed.split('\n').map((line, idx, arr) => {
-              const isLast = idx === arr.length - 1
-              return (
-                <span key={idx} className={idx === 0 ? '' : 'block'}>
-                  {line}
-                  {isLast && <span className="caret-blink" />}
-                </span>
-              )
-            })}
+            <span>{firstLine.slice(0, firstProgress)}</span>
+            <span className="block">
+              {phrases[phraseIndex].slice(0, secondProgress)}
+              <span className="caret-blink" />
+            </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600 fade-in-up fade-in-up-1">
             Act quick. Act clever.
