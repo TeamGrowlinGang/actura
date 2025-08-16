@@ -46,8 +46,8 @@ export function Hero() {
               <span className="font-semibold">Download</span>
               <FiChevronRight />
             </a>
-            <a href="#" className="font-semibold text-brand">
-              Contact sales
+            <a href="/profile" className="font-semibold text-brand">
+              View profile
             </a>
           </div>
 
