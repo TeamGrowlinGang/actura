@@ -327,7 +327,7 @@ function Overlay() {
                 </div>
 
                 {/* Expanded-only actions (always present for animation) */}
-                <div className={`expanded-actions ${isExpanded ? "show" : ""}`}>
+                <div className={`expanded-actions ${(isExpanded || isRecording) ? "show" : ""}`}>
                     <button className="icon-btn lg" title="Home" onClick={goHome}>
                         <Home size={18} />
                     </button>
