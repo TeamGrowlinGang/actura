@@ -51,7 +51,7 @@ export function Hero() {
     <section className="relative hero-fade">
       <div className="site-container">
         <div className="mx-auto max-w-5xl px-6 pb-24 pt-20 text-center md:pt-28">
-          <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-7xl font-[Futura,Inter,system-ui,Arial,sans-serif] fade-in-up">
+          <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-7xl font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif] fade-in-up">
             <span>{firstLine.slice(0, firstProgress)}</span>
             <span className="block">
               {phrases[phraseIndex].slice(0, secondProgress)}
@@ -65,12 +65,12 @@ export function Hero() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-5 fade-in-up fade-in-up-2">
             <a
               href="#"
-              className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-white text-lg md:text-xl shadow hover:bg-neutral-800"
+              className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-white text-lg md:text-xl shadow hover:bg-neutral-800 font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif]"
             >
               <span className="font-semibold">Download</span>
               <FiChevronRight />
             </a>
-            <a href="/profile" className="font-semibold text-brand text-lg md:text-xl">
+            <a href="/profile" className="font-semibold text-brand text-lg md:text-xl font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif]">
               View profile
             </a>
           </div>
