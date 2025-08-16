@@ -5,14 +5,6 @@ import type { Meeting, ProfileData } from '../lib/types'
 import { Link } from 'react-router-dom'
 import { FiChevronLeft, FiCheck, FiClock } from 'react-icons/fi'
 
-function formatDuration(mins: number): string {
-  if (mins <= 0) return '0m'
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  if (h > 0 && m > 0) return `${h}h ${m}m`
-  if (h > 0) return `${h}h`
-  return `${m}m`
-}
 
 function StatusPill({ status }: { status: Meeting['status'] }) {
   const Icon = status === 'complete' ? FiCheck : FiClock
