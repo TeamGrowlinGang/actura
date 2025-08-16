@@ -128,97 +128,101 @@ function Overlay() {
             ref={pillRef}
             className={`toolbar ${isExpanded ? "expanded" : ""}`}
         >
-            {/* Drag handle */}
-            <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
-                <GripVertical size={16} />
-            </div>
+            {/* Non-interactive background to isolate backdrop-filter from drag region */}
+            <div className="toolbar-bg" aria-hidden="true" />
+            <div className="toolbar-content">
+                {/* Drag handle */}
+                <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
+                    <GripVertical size={16} />
+                </div>
 
-            {!isExpanded ? (
-                <>
-                    {/* Recording indicator (green when recording, red when idle) */}
-                    <span
-                        className={`status-indicator ${isRecording ? "active" : ""}`}
-                        aria-label={isRecording ? "Recording" : "Idle"}
-                    />
+                {!isExpanded ? (
+                    <>
+                        {/* Recording indicator (green when recording, red when idle) */}
+                        <span
+                            className={`status-indicator ${isRecording ? "active" : ""}`}
+                            aria-label={isRecording ? "Recording" : "Idle"}
+                        />
 
-                    {/* Record toggle */}
-                    <button
-                        className={`icon-btn ${isRecording ? "ok" : "warn"}`}
-                        title={isRecording ? "Stop recording" : "Start recording"}
-                        onClick={() => setIsRecording((v) => !v)}
-                    >
-                        {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
-                    </button>
-
-                    {/* Hide overlay */}
-                    <button className="icon-btn" title="Hide overlay" onClick={hideOverlay}>
-                        <EyeOff size={16} />
-                    </button>
-
-                    {/* Home placeholder menu */}
-                    <div className="menu-wrapper">
+                        {/* Record toggle */}
                         <button
-                            className="icon-btn"
-                            title="Home"
-                            aria-haspopup="menu"
-                            aria-expanded={isMenuOpen}
-                            onClick={() => setIsMenuOpen((o) => !o)}
+                            className={`icon-btn ${isRecording ? "ok" : "warn"}`}
+                            title={isRecording ? "Stop recording" : "Start recording"}
+                            onClick={() => setIsRecording((v) => !v)}
                         >
-                            <Home size={16} />
+                            {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
                         </button>
-                        {isMenuOpen && (
-                            <div className="menu" role="menu">
-                                <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
-                                <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
-                                <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Expand button */}
-                    <button className="icon-btn" title="Expand" onClick={toggleExpanded}>
-                        <ChevronRight size={16} />
-                    </button>
-                </>
-            ) : (
-                <>
-                    {/* Recording with label */}
-                    <button
-                        className={`btn primary ${isRecording ? "ok" : "warn"}`}
-                        title={isRecording ? "Stop recording" : "Start recording"}
-                        onClick={() => setIsRecording((v) => !v)}
-                    >
-                        {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
-                        <span style={{ marginLeft: 6 }}>{isRecording ? "Stop" : "Listen"}</span>
-                    </button>
-
-                    {/* Hide with label */}
-                    <button className="btn" onClick={hideOverlay}>
-                        <EyeOff size={16} />
-                        <span style={{ marginLeft: 6 }}>Hide</span>
-                    </button>
-
-                    {/* Home with menu */}
-                    <div className="menu-wrapper">
-                        <button className="btn" onClick={() => setIsMenuOpen((o) => !o)}>
-                            <Home size={16} />
-                            <span style={{ marginLeft: 6 }}>Home</span>
+                        {/* Hide overlay */}
+                        <button className="icon-btn" title="Hide overlay" onClick={hideOverlay}>
+                            <EyeOff size={16} />
                         </button>
-                        {isMenuOpen && (
-                            <div className="menu" role="menu">
-                                <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
-                                <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
-                                <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Collapse */}
-                    <button className="icon-btn" title="Collapse" onClick={toggleExpanded}>
-                        <ChevronLeft size={16} />
-                    </button>
-                </>
-            )}
+                        {/* Home placeholder menu */}
+                        <div className="menu-wrapper">
+                            <button
+                                className="icon-btn"
+                                title="Home"
+                                aria-haspopup="menu"
+                                aria-expanded={isMenuOpen}
+                                onClick={() => setIsMenuOpen((o) => !o)}
+                            >
+                                <Home size={16} />
+                            </button>
+                            {isMenuOpen && (
+                                <div className="menu" role="menu">
+                                    <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
+                                    <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
+                                    <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Expand button */}
+                        <button className="icon-btn" title="Expand" onClick={toggleExpanded}>
+                            <ChevronRight size={16} />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {/* Recording with label */}
+                        <button
+                            className={`btn primary ${isRecording ? "ok" : "warn"}`}
+                            title={isRecording ? "Stop recording" : "Start recording"}
+                            onClick={() => setIsRecording((v) => !v)}
+                        >
+                            {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
+                            <span style={{ marginLeft: 6 }}>{isRecording ? "Stop" : "Listen"}</span>
+                        </button>
+
+                        {/* Hide with label */}
+                        <button className="btn" onClick={hideOverlay}>
+                            <EyeOff size={16} />
+                            <span style={{ marginLeft: 6 }}>Hide</span>
+                        </button>
+
+                        {/* Home with menu */}
+                        <div className="menu-wrapper">
+                            <button className="btn" onClick={() => setIsMenuOpen((o) => !o)}>
+                                <Home size={16} />
+                                <span style={{ marginLeft: 6 }}>Home</span>
+                            </button>
+                            {isMenuOpen && (
+                                <div className="menu" role="menu">
+                                    <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
+                                    <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
+                                    <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Collapse */}
+                        <button className="icon-btn" title="Collapse" onClick={toggleExpanded}>
+                            <ChevronLeft size={16} />
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
     );
 }
