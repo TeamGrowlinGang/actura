@@ -104,7 +104,7 @@ export function Profile() {
             <article key={meeting.id} className="group rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-transform duration-200 ease-out hover:shadow-md hover:scale-[1.01]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Link to={`/meetings/${meeting.id}`} className="text-lg font-semibold text-brand-dark hover:underline">
+                  <Link to={`/meetings/${meeting.id}`} className="text-lg font-semibold text-brand-dark hover:text-brand">
                     {meeting.title}
                   </Link>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-neutral-500">

@@ -61,7 +61,7 @@ export function MeetingDetails() {
   }
 
   return (
-    <section className="min-h-dvh bg-[#F7FAFF] px-4 py-6 md:py-10">
+    <section className="min-h-dvh bg-[#F7FAFF] px-4 py-6 md:py-10 hero-fade">
       <div className="site-container">
         {/* Top bar */}
         <div className="flex items-center justify-between">
