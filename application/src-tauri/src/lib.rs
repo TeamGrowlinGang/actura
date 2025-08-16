@@ -24,13 +24,13 @@ fn resize_overlay(window: Window) {
         .unwrap();
 }
 
-fn desktop_foundershack_dir() -> std::path::PathBuf {
+fn desktop_actura_dir() -> std::path::PathBuf {
     use std::path::PathBuf;
     let base = std::env::var_os("HOME")
         .or_else(|| std::env::var_os("USERPROFILE"))
         .map(PathBuf::from)
-        .map(|h| h.join("Desktop").join("Foundershack"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Foundershack"));
+        .map(|h| h.join("Desktop").join("Actura"))
+        .unwrap_or_else(|| std::env::temp_dir().join("Actura"));
     let _ = std::fs::create_dir_all(&base);
     base
 }
@@ -38,7 +38,7 @@ fn desktop_foundershack_dir() -> std::path::PathBuf {
 #[tauri::command]
 fn save_web_audio(bytes: Vec<u8>, filename: Option<String>) -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let dir = desktop_foundershack_dir();
+    let dir = desktop_actura_dir();
     let name = filename.unwrap_or_else(|| {
         let ts = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -92,8 +92,8 @@ fn start_recording(recorder_active: tauri::State<RecorderActive>) -> String {
     let active = recorder_active.inner().clone();
     active.store(true, Ordering::SeqCst);
 
-    // Prefer saving to Desktop/Foundershack. Fallback to temp dir if not available.
-    let base_dir = desktop_foundershack_dir();
+    // Prefer saving to Desktop/Actura. Fallback to temp dir if not available.
+    let base_dir = desktop_actura_dir();
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -215,9 +215,8 @@ pub fn run() {
                 let last_click = Arc::new(StdMutex::new(Instant::now() - Duration::from_secs(1)));
                 let last_click_closure = last_click.clone();
 
-                let mut tray_builder = TrayIconBuilder::new()
-                    .tooltip("foundershack")
-                    .on_tray_icon_event(move |tray, event| match event {
+                let mut tray_builder = TrayIconBuilder::new().tooltip("Actura").on_tray_icon_event(
+                    move |tray, event| match event {
                         TrayIconEvent::Click { .. } => {
                             // Debounce to avoid double toggle on some platforms
                             let now = Instant::now();
@@ -243,7 +242,8 @@ pub fn run() {
                             }
                         }
                         _ => {}
-                    });
+                    },
+                );
 
                 if let Some(icon) = app.default_window_icon() {
                     tray_builder = tray_builder.icon(icon.clone());
