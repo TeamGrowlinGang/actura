@@ -14,7 +14,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 10px;
+    padding: 3px;
     border-radius: 9999px;
     /* Important for layering a separate background to avoid macOS drag bugs */
     position: relative;
@@ -23,22 +23,27 @@ body {
     color: #fff;
     /* Do NOT stretch to window size. Let content define size. */
     width: max-content;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
-.toolbar.expanded {
-    padding: 8px 12px;
-    gap: 12px;
-}
+/* Expanded state comes from hover on content */
 
 /* Separate background layer to prevent backdrop-filter from breaking drag regions on macOS */
 .toolbar-bg {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(20, 20, 20, 0.88);
+    background: rgba(24, 89, 168, 1);
     backdrop-filter: blur(6px);
     pointer-events: none;
+}
+
+/* Expanded actions (right side): shown on hover */
+.expanded-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0px 8px 0px 0px;
 }
 
 /* Content wrapper above the background */
@@ -46,7 +51,7 @@ body {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 /* Drag handle with grip dots */
@@ -64,16 +69,74 @@ body {
     pointer-events: none;
 }
 
-/* Status indicators */
-.status-indicator {
+/* Recorder pill (left block): red dot + timer */
+.recorder-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #212B37;
+    color: #e8edf3;
+    padding: 8px 14px;
+    border-radius: 9999px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.record-toggle {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: none;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 120ms ease;
+    -webkit-app-region: no-drag;
+}
+
+.record-toggle.idle {
+    background: #ef5350;
+    /* red */
+}
+
+.record-toggle.recording {
+    background: #1c60d6;
+    /* blue */
+}
+
+.record-toggle:hover {
+    transform: translateY(-1px);
+}
+
+.record-toggle:active {
+    transform: translateY(0);
+}
+
+.record-toggle-inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: #fff;
+}
+
+/* Inner shape: circle when idle, square when recording */
+.record-toggle.idle .record-toggle-inner {
     width: 10px;
     height: 10px;
     border-radius: 9999px;
-    background: #ff5353;
 }
 
-.status-indicator.active {
-    background: #29d44b;
+.record-toggle.recording .record-toggle-inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    /* square */
+}
+
+.timer-text {
+    font-size: 16px;
+    letter-spacing: 0.5px;
 }
 
 /* Meeting info */
@@ -152,6 +215,11 @@ body {
     height: auto;
     max-width: 100%;
     max-height: 100%;
+}
+
+.icon-btn.lg svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* Menu */

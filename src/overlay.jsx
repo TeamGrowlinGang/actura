@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, LogicalPosition } from "@tauri-apps/api/dpi";
-import { GripVertical, Mic, MicOff, EyeOff, Home, ChevronRight, ChevronLeft } from "lucide-react";
+import { GripVertical, Home, Grip } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import "./overlay.css";
 
@@ -15,7 +15,11 @@ function Overlay() {
     const [isVisible, setIsVisible] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [elapsedMs, setElapsedMs] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+    const dataChunksRef = useRef([]);
+    const [recordings, setRecordings] = useState([]);
     const pillRef = useRef(null);
 
     useEffect(() => {
@@ -112,14 +116,99 @@ function Overlay() {
         return () => ro.disconnect();
     }, [isVisible]);
 
-    const toggleExpanded = () => {
-        setIsExpanded(!isExpanded);
-    };
-
     const hideOverlay = async () => {
         const appWindow = getCurrentWindow();
         setIsVisible(false);
         await appWindow.hide();
+    };
+
+    const getSupportedMimeType = () => {
+        const preferred = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/ogg;codecs=opus",
+            "audio/ogg"
+        ];
+        for (const type of preferred) {
+            if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
+        }
+        return undefined;
+    };
+
+    const generateRecordingName = () => {
+        const uuid = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+        const ts = Date.now();
+        return `${uuid}_${ts}.webm`;
+    };
+
+    useEffect(() => {
+        let interval;
+        if (isRecording) {
+            const start = Date.now() - elapsedMs;
+            interval = setInterval(() => setElapsedMs(Date.now() - start), 500);
+        }
+        return () => interval && clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRecording]);
+
+    const formatTime = (ms) => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    };
+
+    const startRecording = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStreamRef.current = stream;
+            const mimeType = getSupportedMimeType();
+            const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+            dataChunksRef.current = [];
+            mr.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) dataChunksRef.current.push(e.data);
+            };
+            mr.onstop = () => {
+                try {
+                    const type = mimeType || "audio/webm";
+                    const blob = new Blob(dataChunksRef.current, { type });
+                    const name = generateRecordingName();
+                    setRecordings((prev) => [{ name, blob }, ...prev]);
+                } finally {
+                    dataChunksRef.current = [];
+                    if (mediaStreamRef.current) {
+                        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+                        mediaStreamRef.current = null;
+                    }
+                    mediaRecorderRef.current = null;
+                }
+            };
+            mediaRecorderRef.current = mr;
+            mr.start();
+            setElapsedMs(0);
+            setIsRecording(true);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const stopRecording = () => {
+        try {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+                mediaRecorderRef.current.stop();
+            }
+        } finally {
+            setIsRecording(false);
+        }
+    };
+
+    const onRecordPress = () => (isRecording ? stopRecording() : startRecording());
+
+    const goHome = () => {
+        try {
+            window.location.href = "https://www.google.com";
+        } catch (_) { }
     };
 
     return (
@@ -130,97 +219,34 @@ function Overlay() {
         >
             {/* Non-interactive background to isolate backdrop-filter from drag region */}
             <div className="toolbar-bg" aria-hidden="true" />
-            <div className="toolbar-content">
-                {/* Drag handle */}
-                <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
-                    <GripVertical size={16} />
+            <div
+                className="toolbar-content"
+                onMouseEnter={() => setIsExpanded(true)}
+                onMouseLeave={() => setIsExpanded(false)}
+            >
+                {/* Collapsed / Base content: record + timer block */}
+                <div className="recorder-pill">
+                    <button
+                        className={`record-toggle ${isRecording ? "recording" : "idle"}`}
+                        onClick={onRecordPress}
+                        aria-label={isRecording ? "Stop recording" : "Start recording"}
+                    >
+                        <span className="record-toggle-inner" />
+                    </button>
+                    <span className="timer-text">{formatTime(isRecording ? elapsedMs : 0)}</span>
                 </div>
 
-                {!isExpanded ? (
-                    <>
-                        {/* Recording indicator (green when recording, red when idle) */}
-                        <span
-                            className={`status-indicator ${isRecording ? "active" : ""}`}
-                            aria-label={isRecording ? "Recording" : "Idle"}
-                        />
-
-                        {/* Record toggle */}
-                        <button
-                            className={`icon-btn ${isRecording ? "ok" : "warn"}`}
-                            title={isRecording ? "Stop recording" : "Start recording"}
-                            onClick={() => setIsRecording((v) => !v)}
-                        >
-                            {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
+                {/* Expanded-only actions */}
+                {isExpanded && (
+                    <div className="expanded-actions">
+                        <button className="icon-btn lg" title="Home" onClick={goHome}>
+                            <Home size={18} />
                         </button>
-
-                        {/* Hide overlay */}
-                        <button className="icon-btn" title="Hide overlay" onClick={hideOverlay}>
-                            <EyeOff size={16} />
-                        </button>
-
-                        {/* Home placeholder menu */}
-                        <div className="menu-wrapper">
-                            <button
-                                className="icon-btn"
-                                title="Home"
-                                aria-haspopup="menu"
-                                aria-expanded={isMenuOpen}
-                                onClick={() => setIsMenuOpen((o) => !o)}
-                            >
-                                <Home size={16} />
-                            </button>
-                            {isMenuOpen && (
-                                <div className="menu" role="menu">
-                                    <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
-                                    <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
-                                    <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
-                                </div>
-                            )}
+                        {/* Drag handle */}
+                        <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
+                            <GripVertical size={16} />
                         </div>
-
-                        {/* Expand button */}
-                        <button className="icon-btn" title="Expand" onClick={toggleExpanded}>
-                            <ChevronRight size={16} />
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        {/* Recording with label */}
-                        <button
-                            className={`btn primary ${isRecording ? "ok" : "warn"}`}
-                            title={isRecording ? "Stop recording" : "Start recording"}
-                            onClick={() => setIsRecording((v) => !v)}
-                        >
-                            {isRecording ? <Mic size={16} /> : <MicOff size={16} />}
-                            <span style={{ marginLeft: 6 }}>{isRecording ? "Stop" : "Listen"}</span>
-                        </button>
-
-                        {/* Hide with label */}
-                        <button className="btn" onClick={hideOverlay}>
-                            <EyeOff size={16} />
-                            <span style={{ marginLeft: 6 }}>Hide</span>
-                        </button>
-
-                        {/* Home with menu */}
-                        <div className="menu-wrapper">
-                            <button className="btn" onClick={() => setIsMenuOpen((o) => !o)}>
-                                <Home size={16} />
-                                <span style={{ marginLeft: 6 }}>Home</span>
-                            </button>
-                            {isMenuOpen && (
-                                <div className="menu" role="menu">
-                                    <button className="menu-item" role="menuitem" onClick={() => alert("Open home (placeholder)")}>Open Home</button>
-                                    <button className="menu-item" role="menuitem" onClick={() => alert("Settings (placeholder)")}>Settings</button>
-                                    <button className="menu-item" role="menuitem" onClick={() => setIsMenuOpen(false)}>Close</button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Collapse */}
-                        <button className="icon-btn" title="Collapse" onClick={toggleExpanded}>
-                            <ChevronLeft size={16} />
-                        </button>
-                    </>
+                    </div>
                 )}
             </div>
         </div>
