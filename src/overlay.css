@@ -14,20 +14,21 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-
     padding: 6px 10px;
     border-radius: 9999px;
-
     /* Important for layering a separate background to avoid macOS drag bugs */
     position: relative;
-
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     font-size: 13px;
     color: #fff;
-
     /* Do NOT stretch to window size. Let content define size. */
     width: max-content;
     transition: all 0.3s ease;
+}
+
+.toolbar.expanded {
+    padding: 8px 12px;
+    gap: 12px;
 }
 
 /* Separate background layer to prevent backdrop-filter from breaking drag regions on macOS */
@@ -50,47 +51,32 @@ body {
 
 /* Drag handle with grip dots */
 .drag-handle {
-    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    -webkit-app-region: drag;
     width: 16px;
     height: 16px;
     cursor: grab;
+    -webkit-app-region: drag;
 }
 
 .drag-handle svg {
     pointer-events: none;
 }
 
-/* Expanded state */
-.toolbar.expanded {
-    padding: 8px 12px;
-    gap: 12px;
-}
-
-/* Status indicator */
+/* Status indicators */
 .status-indicator {
     width: 10px;
     height: 10px;
     border-radius: 9999px;
     background: #ff5353;
-    display: inline-block;
 }
 
 .status-indicator.active {
     background: #29d44b;
 }
 
-/* Meeting status text */
-.meeting-status {
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap;
-}
-
-/* Meeting info container */
+/* Meeting info */
 .meeting-info {
     display: flex;
     flex-direction: column;
@@ -99,11 +85,17 @@ body {
 
 .meeting-info .meeting-status {
     font-size: 12px;
+    font-weight: 500;
+    color: #fff;
     opacity: 0.9;
+    white-space: nowrap;
 }
 
-/* Text buttons */
+/* Buttons */
 .toolbar .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border: 0;
     background: transparent;
     color: #fff;
@@ -113,9 +105,9 @@ body {
     border-radius: 9999px;
     cursor: pointer;
     transition: background 120ms ease;
+    -webkit-app-region: no-drag;
 }
 
-/* Primary action (blue) */
 .toolbar .btn.primary {
     background: #1a73e8;
 }
@@ -133,27 +125,40 @@ body {
 }
 
 /* Secondary hover */
+
 .toolbar .btn:hover {
     background: rgba(255, 255, 255, 0.12);
 }
 
-/* Icon button (circle) */
+/* Icon buttons */
 .toolbar .icon-btn {
     all: unset;
     /* remove all inherited/OS styles */
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: auto;
-    height: auto;
     padding: 0;
+    font-size: 0;
+    line-height: 0;
+    box-sizing: border-box;
     cursor: pointer;
-    /* keep clickable */
+    -webkit-app-region: no-drag;
 }
 
-/* Simple menu */
+.icon-btn svg {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Menu */
 .menu-wrapper {
     position: relative;
+    display: inline-flex;
+    align-items: center;
 }
 
 .menu {
@@ -182,10 +187,4 @@ body {
 
 .menu .menu-item:hover {
     background: rgba(255, 255, 255, 0.08);
-}
-
-/* Make buttons clickable (non-draggable) */
-.toolbar .btn,
-.toolbar .icon-btn {
-    -webkit-app-region: no-drag;
 }
