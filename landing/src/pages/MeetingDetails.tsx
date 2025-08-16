@@ -81,9 +81,25 @@ export function MeetingDetails() {
 
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 setSending(true)
-                setTimeout(() => setSending(false), 900)
+                try {
+                  const base = (import.meta as any).env.VITE_N8N_URL as string
+                  const secret = (import.meta as any).env.VITE_N8N_SECRET as string | undefined
+                  const url = `${base?.replace(/\/$/, '') || ''}/webhook/export-notion`
+                  await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...(secret ? { 'x-webhook-secret': secret } : {}),
+                    },
+                    body: JSON.stringify({ meetingId: meeting.id }),
+                  })
+                } catch (err) {
+                  console.error('Failed to request Notion export', err)
+                } finally {
+                  setSending(false)
+                }
               }}
               className="inline-flex items-center justify-self-end justify-center gap-2 rounded-lg bg-[#2a74ff] px-3 py-2 font-semibold text-white shadow hover:bg-brand-dark md:row-start-1 md:col-start-2"
             >
