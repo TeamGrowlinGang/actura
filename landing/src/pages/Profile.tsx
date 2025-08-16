@@ -109,8 +109,6 @@ export function Profile() {
                   </Link>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
                     <span>Yesterday at {new Date(meeting.startsAtISO).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-                    <span>•</span>
-                    <span>{formatDuration(meeting.durationMinutes)}</span>
                     {meeting.actionItemCount > 0 && (
                       <>
                         <span>•</span>
@@ -122,7 +120,6 @@ export function Profile() {
                     {meeting.participants.map(p => (
                       <span key={p.id} className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E9F2FF] text-brand-dark text-[11px] font-bold">{p.initials}</span>
                     ))}
-                    <span className="ml-1">{meeting.participants.length} participant{meeting.participants.length > 1 ? 's' : ''}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
