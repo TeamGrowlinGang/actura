@@ -1,0 +1,231 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "export-notion",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "3b35367e-847f-499c-88e6-51fcc81eaa2a",
+        "name": "Export Notion Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -272,
+          208
+        ],
+        "webhookId": "e446449f-1423-4f84-a99b-ddba18ffa056"
+      },
+      {
+        "parameters": {
+          "url": "={{ $env.SUPABASE_URL + '/rest/v1/meetings' }}",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "select",
+                "value": "id,title,starts_at,duration_minutes,status,summary,meeting_participants:meeting_participants(participant:participants(id,name,initials)),action_items(id,title,assignee_email,due_date,priority,timestamp_label)"
+              },
+              {
+                "name": "id",
+                "value": "={{ 'eq.' + $node['Export Notion Webhook'].json.body.meetingId }}"
+              },
+              {
+                "name": "limit",
+                "value": "1"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "100b2891-be30-4053-83b8-c0de3e1816ab",
+        "name": "Fetch Meeting (Supabase)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          0,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = Array.isArray($json) ? $json : [];\nif (!rows[0]) { return [{ json: { page: null, error: 'Meeting not found' } }]; }\nconst m = rows[0];\nconst participants = (m.meeting_participants || []).map(mp => mp.participant).filter(Boolean);\nconst ai = (m.action_items || []).map(a => ({\n  id: a.id,\n  title: a.title,\n  assignee: a.assignee_email || '',\n  due: a.due_date || '',\n  priority: a.priority || 'Medium',\n  ts: a.timestamp_label || ''\n}));\nconst blocks = [];\nblocks.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: 'Summary' } }] } });\nblocks.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: m.summary || '' } }] } });\nblocks.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: 'Participants' } }] } });\nblocks.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: participants.map(p=>p.initials+': '+p.name).join(', ') || '—' } }] } });\nblocks.push({ object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: 'Action Items' } }] } });\nai.forEach(item => {\n  const line = `${item.title}${item.assignee ? ' (assignee: ' + item.assignee + ')' : ''}${item.due ? ' due ' + item.due : ''}${item.priority ? ' [' + item.priority + ']' : ''}${item.ts ? ' ' + item.ts : ''}`;\n  blocks.push({ object: 'block', type: 'bulleted_list_item', bulleted_list_item: { rich_text: [{ type: 'text', text: { content: line } }] } });\n});\nconst page = {\n  parent: { database_id: $env.NOTION_DATABASE_ID },\n  properties: {\n    Name: { title: [{ type: 'text', text: { content: m.title } }] },\n    \"Meeting ID\": { rich_text: [{ type: 'text', text: { content: m.id } }] },\n    \"Starts At\": { date: { start: m.starts_at } },\n    Status: { select: { name: m.status } },\n    \"Duration (min)\": { number: m.duration_minutes }\n  },\n  children: blocks\n};\nreturn [{ json: { page } }];"
+        },
+        "id": "ef4fbce8-7113-463a-b9cd-4b125a8df77d",
+        "name": "Map to Notion",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.NOTION_TOKEN}}"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.page }}",
+          "options": {}
+        },
+        "id": "656e6975-e380-426d-a172-9df9678a3205",
+        "name": "Create Notion Page",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          464,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ $env.SUPABASE_URL + '/rest/v1/meetings' }}",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "id",
+                "value": "={{ 'eq.' + $node['Export Notion Webhook'].json.body.meetingId }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "=sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { notion_requested: true, notion_exported_at: new Date().toISOString() } }}",
+          "options": {}
+        },
+        "id": "627e0a01-2f3c-48dd-abf5-6767bdcb9ea8",
+        "name": "Flag Meeting Exported",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          688,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "11ad6fe9-01d9-4378-af9e-2b0eee041945",
+        "name": "Respond OK",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          912,
+          208
+        ]
+      }
+    ],
+    "connections": {
+      "Export Notion Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Meeting (Supabase)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Meeting (Supabase)": {
+        "main": [
+          [
+            {
+              "node": "Map to Notion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Map to Notion": {
+        "main": [
+          [
+            {
+              "node": "Create Notion Page",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Notion Page": {
+        "main": [
+          [
+            {
+              "node": "Flag Meeting Exported",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Flag Meeting Exported": {
+        "main": [
+          [
+            {
+              "node": "Respond OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "d523045ccfa552742331f27bba29135564a27717adc688d4167a0bf06b587779"
+    }
+  }
