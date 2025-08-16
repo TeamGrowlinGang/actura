@@ -295,10 +295,12 @@ function Overlay() {
 
     const onRecordPress = () => (isRecording ? stopRecording() : startRecording());
 
-    const goHome = () => {
+    const goHome = async () => {
         try {
-            window.location.href = "https://www.google.com";
-        } catch (_) { }
+            await invoke("open_home");
+        } catch (e) {
+            console.error("Failed to open home URL:", e);
+        }
     };
 
     return (

@@ -12,6 +12,7 @@ use hound;
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_opener::OpenerExt;
 
 use tauri::Window;
 
@@ -84,6 +85,14 @@ fn get_meeting_state(state: tauri::State<SharedMeetingState>) -> MeetingState {
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+// ------------------- External open commands -------------------
+#[tauri::command]
+fn open_home(app: tauri::AppHandle) -> Result<(), String> {
+    app.opener()
+        .open_url("https://www.google.com", None::<String>)
+        .map_err(|e| e.to_string())
 }
 
 // ------------------- Audio recording commands -------------------
@@ -173,6 +182,8 @@ pub fn run() {
     let recorder_active: RecorderActive = Arc::new(AtomicBool::new(false));
 
     tauri::Builder::default()
+        // Opener plugin for opening external URLs
+        .plugin(tauri_plugin_opener::init())
         // ------------------- Global shortcut plugin -------------------
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -275,7 +286,8 @@ pub fn run() {
             stop_recording,
             save_web_audio,
             expand_overlay,
-            restore_overlay
+            restore_overlay,
+            open_home
         ])
         .run(tauri::generate_context!())
         .expect("Error running tauri application");
