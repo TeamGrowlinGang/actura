@@ -8,6 +8,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound;
+#[cfg(desktop)]
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -198,14 +200,56 @@ pub fn run() {
         )
         // ------------------- Shared states -------------------
         .manage(Arc::new(Mutex::new(MeetingState {
-            in_meeting: false,
-            meeting_title: None,
+            in_meeting: true,
+            meeting_title: Some("Ready".into()),
         })))
         .manage(recorder_active.clone()) // <- Recorder state
         // ------------------- Setup -------------------
         .setup(|app| {
-            if let Some(overlay) = app.handle().get_webview_window("overlay") {
-                let _ = overlay.hide();
+            // Build a tray icon that toggles overlay visibility on click
+            #[cfg(desktop)]
+            {
+                use std::sync::Mutex as StdMutex;
+                use std::time::{Duration, Instant};
+
+                let last_click = Arc::new(StdMutex::new(Instant::now() - Duration::from_secs(1)));
+                let last_click_closure = last_click.clone();
+
+                let mut tray_builder = TrayIconBuilder::new()
+                    .tooltip("foundershack")
+                    .on_tray_icon_event(move |tray, event| match event {
+                        TrayIconEvent::Click { .. } => {
+                            // Debounce to avoid double toggle on some platforms
+                            let now = Instant::now();
+                            if let Ok(mut prev) = last_click_closure.lock() {
+                                if now.duration_since(*prev) < Duration::from_millis(300) {
+                                    return;
+                                }
+                                *prev = now;
+                            }
+
+                            let app = tray.app_handle();
+                            let state = app.state::<SharedMeetingState>();
+                            let mut guard = state.lock().unwrap();
+                            guard.in_meeting = !guard.in_meeting;
+                            if let Some(overlay) = app.get_webview_window("overlay") {
+                                let _ = overlay.emit("meeting-state", &*guard);
+                                if guard.in_meeting {
+                                    let _ = overlay.show();
+                                    let _ = overlay.set_focus();
+                                } else {
+                                    let _ = overlay.hide();
+                                }
+                            }
+                        }
+                        _ => {}
+                    });
+
+                if let Some(icon) = app.default_window_icon() {
+                    tray_builder = tray_builder.icon(icon.clone());
+                }
+
+                let _tray = tray_builder.build(app)?;
             }
 
             // Register the global shortcut Ctrl+M to toggle overlay visibility
@@ -214,6 +258,12 @@ pub fn run() {
                 println!("Failed to register Ctrl+M shortcut: {}", e);
             } else {
                 println!("Registered global shortcut: Ctrl+M");
+            }
+            // Ensure overlay reflects initial state, don't force visible
+            if let Some(overlay) = app.handle().get_webview_window("overlay") {
+                let state = app.state::<SharedMeetingState>();
+                let guard = state.lock().unwrap();
+                let _ = overlay.emit("meeting-state", &*guard);
             }
             Ok(())
         })

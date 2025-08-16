@@ -13,13 +13,6 @@
         "macOSPrivateApi": true,
         "windows": [
             {
-                "label": "main",
-                "title": "Main App",
-                "width": 800,
-                "height": 600,
-                "url": "http://localhost:1420"
-            },
-            {
                 "label": "overlay",
                 "title": "Overlay",
                 "width": 170,
@@ -30,7 +23,7 @@
                 "resizable": false,
                 "skipTaskbar": true,
                 "shadow": false,
-                "visible": false,
+                "visible": true,
                 "url": "http://localhost:1420/overlay.html"
             }
         ]
