@@ -103,4 +103,88 @@ export async function requestNotionExport(meetingId: string): Promise<boolean> {
   return true
 }
 
+// Action items persistence
+export async function createActionItem(meetingId: string): Promise<ActionItem | null> {
+  if (DATA_SOURCE !== 'supabase') return null
+  const client = getSupabaseClient()
+  if (!client) return null
+
+  const newId = `ai_${meetingId}_${Date.now()}`
+  const insertRow = {
+    id: newId,
+    meeting_id: meetingId,
+    title: '',
+    assignee_email: null as string | null,
+    due_date: null as string | null,
+    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    timestamp_label: null as string | null,
+  }
+
+  const { data, error } = await client
+    .from('action_items')
+    .insert(insertRow)
+    .select('id, title, assignee_email, due_date, priority, timestamp_label')
+    .single()
+
+  if (error) {
+    console.error('Failed to create action item:', error)
+    return null
+  }
+
+  return {
+    id: data.id,
+    title: data.title,
+    assigneeEmail: data.assignee_email ?? undefined,
+    dueDateISO: data.due_date ?? undefined,
+    priority: data.priority ?? undefined,
+    timestampLabel: data.timestamp_label ?? undefined,
+  }
+}
+
+export async function updateActionItem(
+  meetingId: string,
+  item: ActionItem,
+): Promise<boolean> {
+  if (DATA_SOURCE !== 'supabase') return true
+  const client = getSupabaseClient()
+  if (!client) return false
+
+  const updateRow = {
+    title: item.title,
+    assignee_email: item.assigneeEmail ?? null,
+    due_date: item.dueDateISO ?? null,
+    priority: item.priority ?? null,
+    timestamp_label: item.timestampLabel ?? null,
+  }
+
+  const { error } = await client
+    .from('action_items')
+    .update(updateRow)
+    .eq('id', item.id)
+    .eq('meeting_id', meetingId)
+
+  if (error) {
+    console.error('Failed to update action item:', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteActionItem(id: string): Promise<boolean> {
+  if (DATA_SOURCE !== 'supabase') return true
+  const client = getSupabaseClient()
+  if (!client) return false
+
+  const { error } = await client
+    .from('action_items')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Failed to delete action item:', error)
+    return false
+  }
+  return true
+}
+
 
