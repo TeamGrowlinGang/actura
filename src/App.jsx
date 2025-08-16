@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
+import Recorder from "./components/recorder";
 import "./App.css";
 
 function App() {
@@ -30,8 +31,25 @@ function App() {
 
     return (
         <main className="container">
-            <h1>Welcome to Tauri + React</h1>
-
+            <h1 className="
+                            text-6xl 
+                            font-extrabold 
+                            text-transparent 
+                            bg-clip-text 
+                            bg-gradient-to-r 
+                            from-pink-500 
+                            via-yellow-400 
+                            to-green-500 
+                            animate-pulse 
+                            drop-shadow-[0_0_10px_rgba(255,255,255,0.7)] 
+                            transform 
+                            hover:scale-110 
+                            hover:rotate-3 
+                            transition-all 
+                            duration-500
+                ">
+                Welcome to Tauri + React
+            </h1>
             <div className="row">
                 <a href="https://vite.dev" target="_blank">
                     <img src="/vite.svg" className="logo vite" alt="Vite logo" />
@@ -48,6 +66,8 @@ function App() {
                 Meeting: {meetingState.in_meeting ? "Active" : "Not Active"}
                 {meetingState.meeting_title && <span> - {meetingState.meeting_title}</span>}
             </p>
+
+            <Recorder />
 
             <form
                 className="row"
