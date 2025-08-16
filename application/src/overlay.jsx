@@ -16,6 +16,7 @@ function Overlay() {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [autoResize, setAutoResize] = useState(true);
     const [elapsedMs, setElapsedMs] = useState(0);
     const mediaRecorderRef = useRef(null);
     const mediaStreamRef = useRef(null);
@@ -63,7 +64,7 @@ function Overlay() {
     }, []);
 
     useEffect(() => {
-        if (!isVisible) return;
+        if (!isVisible || !autoResize) return;
 
         const appWindow = getCurrentWindow();
         const el = pillRef.current;
@@ -119,7 +120,7 @@ function Overlay() {
         ro.observe(el);
 
         return () => ro.disconnect();
-    }, [isVisible]);
+    }, [isVisible, autoResize]);
 
     const hideOverlay = async () => {
         const appWindow = getCurrentWindow();
@@ -166,6 +167,12 @@ function Overlay() {
     const startRecording = async () => {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         try {
+            // Expand overlay window to avoid permission UI clipping
+            try {
+                setAutoResize(false);
+                await invoke("expand_overlay");
+            } catch (_) { }
+
             // Microphone
             const micStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -250,14 +257,22 @@ function Overlay() {
                         audioContextRef.current = null;
                     }
                     mediaRecorderRef.current = null;
+                    // Restore compact overlay size after recording completes
+                    (async () => { try { await invoke("restore_overlay"); } catch (_) { } })();
                 }
             };
             mediaRecorderRef.current = mr;
             mr.start();
             setElapsedMs(0);
             setIsRecording(true);
+            // Permissions acquired; restore compact size and re-enable auto-resize
+            try { await invoke("restore_overlay"); } catch (_) { }
+            setAutoResize(true);
         } catch (e) {
             console.error(e);
+            // On failure, ensure overlay is restored
+            try { await invoke("restore_overlay"); } catch (_) { }
+            setAutoResize(true);
         }
     };
 

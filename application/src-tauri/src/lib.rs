@@ -10,9 +10,22 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound;
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+
+use tauri::Window;
+
+fn resize_overlay(window: Window) {
+    window
+        .set_size(tauri::Size::Logical(tauri::LogicalSize {
+            width: 900.0,
+            height: 600.0,
+        }))
+        .unwrap();
+}
+
 fn desktop_foundershack_dir() -> std::path::PathBuf {
     use std::path::PathBuf;
-    let base = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))
+    let base = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
         .map(PathBuf::from)
         .map(|h| h.join("Desktop").join("Foundershack"))
         .unwrap_or_else(|| std::env::temp_dir().join("Foundershack"));
@@ -45,6 +58,20 @@ struct MeetingState {
 
 type SharedMeetingState = Arc<Mutex<MeetingState>>;
 type RecorderActive = Arc<AtomicBool>; // For audio recording control
+
+// ------------------- Overlay resize commands -------------------
+#[tauri::command]
+fn expand_overlay(window: Window) {
+    resize_overlay(window);
+}
+
+#[tauri::command]
+fn restore_overlay(window: Window) {
+    let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+        width: 170.0,
+        height: 50.0,
+    }));
+}
 
 // ------------------- Meeting state commands -------------------
 #[tauri::command]
@@ -196,7 +223,9 @@ pub fn run() {
             get_meeting_state,
             start_recording,
             stop_recording,
-            save_web_audio
+            save_web_audio,
+            expand_overlay,
+            restore_overlay
         ])
         .run(tauri::generate_context!())
         .expect("Error running tauri application");
