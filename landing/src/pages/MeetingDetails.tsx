@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchMeetingById } from '../lib/data'
+import { fetchMeetingById, createActionItem, updateActionItem, deleteActionItem } from '../lib/data'
 import type { ActionItem, Meeting } from '../lib/types'
 import { FiChevronLeft, FiClock, FiDownload, FiSend, FiX } from 'react-icons/fi'
 
@@ -125,10 +125,15 @@ export function MeetingDetails() {
             <h2 className="text-xl font-semibold">Action items</h2>
             <button
               className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm hover:bg-neutral-50"
-              onClick={() => setItems((prev) => [
-                ...prev,
-                { id: `ai_${prev.length + 1}`, title: '', assigneeEmail: '', dueDateISO: '', priority: 'Medium' },
-              ])}
+              onClick={async () => {
+                // Optimistic add; if Supabase mode, create server-side and use returned id
+                const optimistic = { id: `ai_${items.length + 1}`, title: '', assigneeEmail: '', dueDateISO: '', priority: 'Medium' as const }
+                setItems((prev) => [...prev, optimistic])
+                const created = await createActionItem(meeting.id)
+                if (created) {
+                  setItems((prev) => prev.map((p) => (p === optimistic ? created : p)))
+                }
+              }}
             >
               + Add item
             </button>
@@ -147,6 +152,7 @@ export function MeetingDetails() {
                           const v = e.target.value
                           setItems((prev) => prev.map((p, i) => i === idx ? { ...p, title: v } : p))
                         }}
+                        onBlur={() => updateActionItem(meeting.id, items[idx]).catch(console.error)}
                         placeholder="Add an action item title..."
                         className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 outline-none focus:border-brand"
                       />
@@ -157,6 +163,7 @@ export function MeetingDetails() {
                             const v = e.target.value
                             setItems((prev) => prev.map((p, i) => i === idx ? { ...p, assigneeEmail: v } : p))
                           }}
+                          onBlur={() => updateActionItem(meeting.id, items[idx]).catch(console.error)}
                           placeholder="Assignee"
                           className="rounded-lg border border-neutral-200 bg-white px-3 py-2 outline-none focus:border-brand"
                         />
@@ -167,6 +174,7 @@ export function MeetingDetails() {
                             const v = e.target.value
                             setItems((prev) => prev.map((p, i) => i === idx ? { ...p, dueDateISO: v ? new Date(v).toISOString() : '' } : p))
                           }}
+                          onBlur={() => updateActionItem(meeting.id, items[idx]).catch(console.error)}
                           className="rounded-lg border border-neutral-200 bg-white px-3 py-2 outline-none focus:border-brand"
                         />
                         <select
@@ -175,6 +183,7 @@ export function MeetingDetails() {
                             const v = e.target.value as ActionItem['priority']
                             setItems((prev) => prev.map((p, i) => i === idx ? { ...p, priority: v } : p))
                           }}
+                          onBlur={() => updateActionItem(meeting.id, items[idx]).catch(console.error)}
                           className="rounded-lg border border-neutral-200 bg-white px-3 py-2 outline-none focus:border-brand"
                         >
                           <option>Low</option>
@@ -188,7 +197,11 @@ export function MeetingDetails() {
                       <button
                         type="button"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm hover:bg-red-100"
-                        onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
+                        onClick={() => {
+                          const toDelete = items[idx]
+                          setItems((prev) => prev.filter((_, i) => i !== idx))
+                          deleteActionItem(toDelete.id).catch(console.error)
+                        }}
                         aria-label="Delete action item"
                         title="Delete"
                       >
