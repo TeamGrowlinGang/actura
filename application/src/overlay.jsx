@@ -5,6 +5,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, LogicalPosition } from "@tauri-apps/api/dpi";
 import { GripVertical, Home, Grip } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import { supabase } from "./lib/supabaseClient";
 import "./overlay.css";
 
 function Overlay() {
@@ -229,13 +230,19 @@ function Overlay() {
                     setRecordings((prev) => [{ name, blob }, ...prev]);
                     (async () => {
                         try {
-                            const ab = await blob.arrayBuffer();
-                            const bytes = Array.from(new Uint8Array(ab));
-                            const savedPath = await invoke("save_web_audio", { bytes, filename: name });
-                            setLastSavedPath(savedPath);
-                            console.log("Saved recording to:", savedPath);
+                            const path = `audio/${name}`;
+                            const { error } = await supabase.storage
+                                .from("recordings")
+                                .upload(path, blob, { contentType: type, upsert: false });
+                            if (error) throw error;
+                            const { data: pub } = supabase.storage
+                                .from("recordings")
+                                .getPublicUrl(path);
+                            const url = pub?.publicUrl || path;
+                            setLastSavedPath(url);
+                            console.log("Uploaded recording to Supabase:", url);
                         } catch (e) {
-                            console.error("Failed to save recording:", e);
+                            console.error("Failed to upload recording to Supabase:", e);
                         }
                     })();
                 } finally {
