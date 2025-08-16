@@ -1,0 +1,439 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "url": "={{ 'https://dxvcjzkczcpskmqjgmpf.supabase.co/storage/v1/object/public/recordings/' + encodeURI(($json.body?.record?.name ?? $json.body?.payload?.record?.name) || '') }}",
+          "options": {}
+        },
+        "id": "26f13b56-6fca-4479-ba10-47a4912af8f3",
+        "name": "Download from Supabase Storage",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          96,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "supabase-storage",
+          "options": {}
+        },
+        "id": "c86959af-882d-4f63-880d-4b004961de69",
+        "name": "Supabase Storage Upload",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -144,
+          224
+        ],
+        "webhookId": "fff4713d-12d9-47c0-ad2b-aab1c2cab302"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://dxvcjzkczcpskmqjgmpf.supabase.co/rest/v1/action_items?on_conflict=id",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.action_items }}",
+          "options": {}
+        },
+        "id": "ac04561f-56e0-4dfe-9102-356f7c57e7f5",
+        "name": "Upsert Action Items",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1072,
+          672
+        ]
+      },
+      {
+        "parameters": {
+          "numberInputs": 4
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          1312,
+          352
+        ],
+        "id": "e501dbe1-fc36-4d9b-b4e0-bfa3b9bb7d7c",
+        "name": "Merge"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Normalize LLM output and prepare arrays for Supabase upserts\nlet raw = $json.output ?? $json;\nif (typeof raw === 'string') {\n  raw = raw.replace(/```json\\s*\\n?/g, '').replace(/\\n?\\s*```/g, '');\n  raw = JSON.parse(raw);\n}\nconst fileId = $json.id || $json.fileId || $json.file?.id || (Date.now().toString());\nconst meetingId = (raw.meeting && raw.meeting.id) ? String(raw.meeting.id) : `m_${fileId}`;\nfunction initialsOf(name){\n  if (!name) return 'NA';\n  const parts = String(name).trim().split(/\\s+/);\n  const letters = parts.map(p => p[0]?.toUpperCase()).filter(Boolean);\n  return letters.slice(0,2).join('') || 'NA';\n}\nconst owner = raw.owner_profile || { id: $env.DEFAULT_OWNER_PROFILE_ID || 'user_zh', name: 'Zahir', initials: 'ZH' };\nowner.initials = owner.initials || initialsOf(owner.name);\nconst participants = (raw.participants || []).map(p => ({\n  id: String(p.id || `p_${(p.name||'').toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,8)}`),\n  name: String(p.name || 'Participant'),\n  initials: p.initials || initialsOf(p.name)\n}));\nif (!participants.find(p => p.id === owner.id)) participants.unshift({ id: owner.id, name: owner.name, initials: owner.initials });\nconst meeting = {\n  id: meetingId,\n  owner_id: owner.id,\n  title: String(raw.meeting?.title || 'Untitled Meeting'),\n  starts_at: raw.meeting?.starts_at || new Date().toISOString(),\n  duration_minutes: Number(raw.meeting?.duration_minutes || 0),\n  status: (raw.meeting?.status === 'complete') ? 'complete' : 'pending',\n  summary: raw.meeting?.summary || null\n};\nconst meeting_participants = participants.map(p => ({ meeting_id: meetingId, participant_id: p.id }));\nconst action_items = (raw.action_items || []).map((ai, idx) => ({\n  id: String(ai.id || `ai_${meetingId}_${idx+1}`),\n  meeting_id: meetingId,\n  title: String(ai.title || 'Action Item'),\n  assignee_email: ai.assignee_email || null,\n  due_date: ai.due_date || null,\n  priority: ['Low','Medium','High'].includes(ai.priority) ? ai.priority : 'Medium',\n  timestamp_label: ai.timestamp_label || null\n}));\nreturn [{ json: { profiles: [owner], participants, meetings: [meeting], meeting_participants, action_items } }];"
+        },
+        "id": "010cd611-5799-4122-9e8f-a59d0123506f",
+        "name": "Normalize for Supabase1",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=You are a meeting analysis assistant. Action items don't have to be mentioned explicitly you can infer them from the conversation. Action items can be tasks given to peole. E.g. Anika do X, Bonsen do Y, Jiawen do Z. Given a transcript, output JSON matching this schema exactly with one exception, the assignee_email doesn't need to be their emails, it can also just be their first names.:\n{\n  \"meeting\": {\n    \"id\": \"string (stable id, if unknown leave empty)\",\n    \"title\": \"string\",\n    \"starts_at\": \"ISO datetime or null\",\n    \"duration_minutes\": number,\n    \"status\": \"pending\" | \"complete\",\n    \"summary\": \"string or null\"\n  },\n  \"owner_profile\": { \"id\": \"string\", \"name\": \"string\", \"initials\": \"string\" },\n  \"participants\": [{ \"id\": \"string\", \"name\": \"string\", \"initials\": \"string\" }],\n  \"action_items\": [{\n    \"id\": \"string\",\n    \"title\": \"string\",\n    \"assignee_email\": \"string or null\",\n    \"due_date\": \"ISO datetime or null\",\n    \"priority\": \"Low\" | \"Medium\" | \"High\",\n    \"timestamp_label\": \"string like @12:34 or null\"\n  }]\n}\n\nReturn ONLY minified JSON. If unsure, leave optional fields null.\n\nTranscript:\n{{ $json.text }}",
+          "options": {}
+        },
+        "id": "9798f28b-7678-456e-af12-a4741b1f43f2",
+        "name": "Extract Structured JSON1",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.1,
+        "position": [
+          496,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-5-mini-2025-08-07",
+            "mode": "list",
+            "cachedResultName": "gpt-5-mini-2025-08-07"
+          },
+          "options": {}
+        },
+        "id": "8f97188a-ea64-4aaa-83ae-9d055915d58f",
+        "name": "OpenAI Chat Model1",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          496,
+          416
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "CJeCfideLdbks0T0",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://dxvcjzkczcpskmqjgmpf.supabase.co/rest/v1/meeting_participants?on_conflict=meeting_id,participant_id",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.meeting_participants || [] }}",
+          "options": {}
+        },
+        "id": "e09d8ea6-f606-4599-b240-355860c2da31",
+        "name": "Upsert Meeting Participants",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1552,
+          368
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://dxvcjzkczcpskmqjgmpf.supabase.co/rest/v1/meetings?on_conflict=id",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.meetings }}",
+          "options": {}
+        },
+        "id": "bb3d7ee1-f1a4-4111-acda-37c73b8f06c9",
+        "name": "Upsert Meetings",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1072,
+          464
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://dxvcjzkczcpskmqjgmpf.supabase.co/rest/v1/participants?on_conflict=id",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.participants }}",
+          "options": {}
+        },
+        "id": "60ab906a-70e1-4b5e-b80f-da7cf2da71cf",
+        "name": "Upsert Participants",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1072,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://dxvcjzkczcpskmqjgmpf.supabase.co/rest/v1/profiles?on_conflict=id",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "apikey",
+                "value": "sb_secret_2bKZ9IFRLM_-pWHRBhKUqg_uODOzLCM"
+              },
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.profiles }}",
+          "options": {}
+        },
+        "id": "c6fe3472-a0b7-4adc-97c2-e501e09b07be",
+        "name": "Upsert Profiles",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1072,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "audio",
+          "operation": "transcribe",
+          "options": {}
+        },
+        "id": "1c50e266-e0e2-4b53-a039-d49cf7e2c7fa",
+        "name": "Transcribe recording",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 1.8,
+        "position": [
+          288,
+          224
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "CJeCfideLdbks0T0",
+            "name": "OpenAi account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Download from Supabase Storage": {
+        "main": [
+          [
+            {
+              "node": "Transcribe recording",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase Storage Upload": {
+        "main": [
+          [
+            {
+              "node": "Download from Supabase Storage",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Action Items": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 3
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "Upsert Meeting Participants",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize for Supabase1": {
+        "main": [
+          [
+            {
+              "node": "Upsert Action Items",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Upsert Meetings",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Upsert Participants",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Upsert Profiles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Structured JSON1": {
+        "main": [
+          [
+            {
+              "node": "Normalize for Supabase1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model1": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Extract Structured JSON1",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Meetings": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "Upsert Participants": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Upsert Profiles": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transcribe recording": {
+        "main": [
+          [
+            {
+              "node": "Extract Structured JSON1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "d523045ccfa552742331f27bba29135564a27717adc688d4167a0bf06b587779"
+    }
+  }
