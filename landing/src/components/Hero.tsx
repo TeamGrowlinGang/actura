@@ -1,4 +1,5 @@
 import { FiChevronRight } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
 import JiraLogo from '../assets/Jira.svg'
 import NotionLogo from '../assets/Notion.svg'
 import ZoomLogo from '../assets/Zoom.svg'
@@ -70,9 +71,9 @@ export function Hero() {
               <span className="font-semibold">Download</span>
               <FiChevronRight />
             </a>
-            <a href="/profile" className="font-semibold text-brand text-lg md:text-xl font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif]">
+            <Link to="/profile" className="font-semibold text-brand text-lg md:text-xl font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif]">
               View profile
-            </a>
+            </Link>
           </div>
 
           <div className="mt-16 md:mt-8 lg:mt-4 xl:mt-10 mb-10 md:mb-12 lg:mb-14 flex items-center justify-center gap-5 fade-in-up fade-in-up-3">
