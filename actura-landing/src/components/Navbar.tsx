@@ -9,7 +9,7 @@ export function Navbar() {
             <img
               src={acturaMark}
               alt="Actura"
-              className="h-20 w-auto select-none"
+              className="h-24 w-auto select-none"
               draggable={false}
             />
           </div>

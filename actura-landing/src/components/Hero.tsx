@@ -58,19 +58,19 @@ export function Hero() {
               <span className="caret-blink" />
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600 fade-in-up fade-in-up-1">
+          <p className="mx-auto mt-8 md:mt-10 max-w-2xl text-xl md:text-2xl text-neutral-600 fade-in-up fade-in-up-1">
             Act quick. Act clever.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4 fade-in-up fade-in-up-2">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-5 fade-in-up fade-in-up-2">
             <a
               href="#"
-              className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-6 py-3 text-white shadow hover:bg-neutral-800"
+              className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-white text-lg md:text-xl shadow hover:bg-neutral-800"
             >
               <span className="font-semibold">Download</span>
               <FiChevronRight />
             </a>
-            <a href="/profile" className="font-semibold text-brand">
+            <a href="/profile" className="font-semibold text-brand text-lg md:text-xl">
               View profile
             </a>
           </div>
@@ -79,17 +79,17 @@ export function Hero() {
             <img
               src={ZoomLogo}
               alt="Zoom"
-              className="h-14 w-auto sm:h-[54px] md:h-[60px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
             <img
               src={NotionLogo}
               alt="Notion"
-              className="h-14 w-auto sm:h-[54px] md:h-[60px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
             <img
               src={JiraLogo}
               alt="Jira"
-              className="h-14 w-auto sm:h-[54px] md:h-[60px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
           </div>
         </div>
