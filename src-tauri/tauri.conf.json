@@ -22,8 +22,8 @@
             {
                 "label": "overlay",
                 "title": "Overlay",
-                "width": 200,
-                "height": 80,
+                "width": 1000,
+                "height": 1000,
                 "minWidth": 200,
                 "minHeight": 80,
                 "alwaysOnTop": true,

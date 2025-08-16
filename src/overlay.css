@@ -76,7 +76,6 @@ body {
     justify-content: center;
     width: 16px;
     height: 16px;
-    cursor: grab;
     -webkit-app-region: drag;
 }
 

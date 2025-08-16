@@ -19,6 +19,9 @@ function Overlay() {
     const [elapsedMs, setElapsedMs] = useState(0);
     const mediaRecorderRef = useRef(null);
     const mediaStreamRef = useRef(null);
+    const micStreamRef = useRef(null);
+    const screenStreamRef = useRef(null);
+    const audioContextRef = useRef(null);
     const dataChunksRef = useRef([]);
     const [recordings, setRecordings] = useState([]);
     const [lastSavedPath, setLastSavedPath] = useState("");
@@ -163,10 +166,50 @@ function Overlay() {
     const startRecording = async () => {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStreamRef.current = stream;
+            // Microphone
+            const micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                }
+            });
+            micStreamRef.current = micStream;
+
+            // System audio via display capture (user must choose a source and share audio)
+            let systemStream = null;
+            try {
+                systemStream = await navigator.mediaDevices.getDisplayMedia({
+                    audio: true,
+                    video: true
+                });
+            } catch (err) {
+                console.warn("System audio not available or denied. Proceeding with mic only.", err);
+            }
+            screenStreamRef.current = systemStream;
+
+            // Mix mic + system using WebAudio
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            audioContextRef.current = ctx;
+            await ctx.resume().catch(() => { });
+
+            const destination = ctx.createMediaStreamDestination();
+
+            const micSource = ctx.createMediaStreamSource(micStream);
+            micSource.connect(destination);
+
+            if (systemStream && systemStream.getAudioTracks().length > 0) {
+                const sysAudio = new MediaStream(systemStream.getAudioTracks());
+                const sysSource = ctx.createMediaStreamSource(sysAudio);
+                sysSource.connect(destination);
+            }
+
+            const mixedStream = destination.stream;
+            mediaStreamRef.current = mixedStream;
+
             const mimeType = getSupportedMimeType();
-            const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+            const mr = new MediaRecorder(mixedStream, mimeType ? { mimeType } : undefined);
             dataChunksRef.current = [];
             mr.ondataavailable = (e) => {
                 if (e.data && e.data.size > 0) dataChunksRef.current.push(e.data);
@@ -177,7 +220,6 @@ function Overlay() {
                     const blob = new Blob(dataChunksRef.current, { type });
                     const name = generateRecordingName();
                     setRecordings((prev) => [{ name, blob }, ...prev]);
-                    // Persist to Desktop/Foundershack via Tauri
                     (async () => {
                         try {
                             const ab = await blob.arrayBuffer();
@@ -194,6 +236,18 @@ function Overlay() {
                     if (mediaStreamRef.current) {
                         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
                         mediaStreamRef.current = null;
+                    }
+                    if (micStreamRef.current) {
+                        micStreamRef.current.getTracks().forEach((t) => t.stop());
+                        micStreamRef.current = null;
+                    }
+                    if (screenStreamRef.current) {
+                        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+                        screenStreamRef.current = null;
+                    }
+                    if (audioContextRef.current) {
+                        try { audioContextRef.current.close(); } catch (_) { }
+                        audioContextRef.current = null;
                     }
                     mediaRecorderRef.current = null;
                 }
