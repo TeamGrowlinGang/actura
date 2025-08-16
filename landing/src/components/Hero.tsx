@@ -9,7 +9,7 @@ export function Hero() {
   const firstLine = 'Your AI teammate'
   const phrases = [
     'who never misses a task.',
-    'who summarises meetings.',
+    'who summarises.',
     'who keeps you on track.',
   ]
 
