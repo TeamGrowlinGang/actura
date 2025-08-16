@@ -21,6 +21,7 @@ function Overlay() {
     const mediaStreamRef = useRef(null);
     const dataChunksRef = useRef([]);
     const [recordings, setRecordings] = useState([]);
+    const [lastSavedPath, setLastSavedPath] = useState("");
     const pillRef = useRef(null);
 
     useEffect(() => {
@@ -176,6 +177,18 @@ function Overlay() {
                     const blob = new Blob(dataChunksRef.current, { type });
                     const name = generateRecordingName();
                     setRecordings((prev) => [{ name, blob }, ...prev]);
+                    // Persist to Desktop/Foundershack via Tauri
+                    (async () => {
+                        try {
+                            const ab = await blob.arrayBuffer();
+                            const bytes = Array.from(new Uint8Array(ab));
+                            const savedPath = await invoke("save_web_audio", { bytes, filename: name });
+                            setLastSavedPath(savedPath);
+                            console.log("Saved recording to:", savedPath);
+                        } catch (e) {
+                            console.error("Failed to save recording:", e);
+                        }
+                    })();
                 } finally {
                     dataChunksRef.current = [];
                     if (mediaStreamRef.current) {

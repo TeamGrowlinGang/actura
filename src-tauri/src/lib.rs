@@ -10,6 +10,32 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound;
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+fn desktop_foundershack_dir() -> std::path::PathBuf {
+    use std::path::PathBuf;
+    let base = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .map(|h| h.join("Desktop").join("Foundershack"))
+        .unwrap_or_else(|| std::env::temp_dir().join("Foundershack"));
+    let _ = std::fs::create_dir_all(&base);
+    base
+}
+
+#[tauri::command]
+fn save_web_audio(bytes: Vec<u8>, filename: Option<String>) -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let dir = desktop_foundershack_dir();
+    let name = filename.unwrap_or_else(|| {
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis();
+        format!("recording_{}.webm", ts)
+    });
+    let path = dir.join(name);
+    // Best-effort write; bubble errors via panic to surface during dev
+    std::fs::write(&path, bytes).expect("failed to write webm to disk");
+    path.to_string_lossy().to_string()
+}
 
 #[derive(Debug, Clone, serde::Serialize)]
 struct MeetingState {
@@ -38,15 +64,7 @@ fn start_recording(recorder_active: tauri::State<RecorderActive>) -> String {
     active.store(true, Ordering::SeqCst);
 
     // Prefer saving to Desktop/Foundershack. Fallback to temp dir if not available.
-    fn desktop_dir() -> Option<PathBuf> {
-        let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"));
-        home.map(|h| PathBuf::from(h).join("Desktop"))
-    }
-
-    let base_dir = desktop_dir()
-        .map(|d| d.join("Foundershack"))
-        .unwrap_or_else(|| std::env::temp_dir().join("Foundershack"));
-    let _ = std::fs::create_dir_all(&base_dir);
+    let base_dir = desktop_foundershack_dir();
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -177,7 +195,8 @@ pub fn run() {
             greet,
             get_meeting_state,
             start_recording,
-            stop_recording
+            stop_recording,
+            save_web_audio
         ])
         .run(tauri::generate_context!())
         .expect("Error running tauri application");
