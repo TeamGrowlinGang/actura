@@ -92,7 +92,6 @@ body {
     color: #e8edf3;
     padding: 8px 14px;
     border-radius: 9999px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
     transition: padding-right 200ms ease;
 }
 
