@@ -70,12 +70,12 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto mt-0 md:-mt-12 lg:-mt-16 xl:-mt-24 px-6 md:px-0 fade-in-up fade-in-up-4">
+        <div className="relative mx-auto mt-0 md:-mt-16 lg:-mt-24 xl:-mt-32 px-6 md:px-0 fade-in-up fade-in-up-4">
           <div className="group relative mx-auto w-full">
             <img
               src={desktopImage}
               alt="App preview"
-              className="block w-full rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1)] mx-auto transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+              className="block w-full rounded-2xl mx-auto transition-transform duration-300 ease-out group-hover:scale-[1.02] border-0 outline-none ring-0"
             />
           </div>
         </div>
