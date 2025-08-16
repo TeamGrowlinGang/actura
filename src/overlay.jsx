@@ -15,6 +15,7 @@ function Overlay() {
     const [isVisible, setIsVisible] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [elapsedMs, setElapsedMs] = useState(0);
     const mediaRecorderRef = useRef(null);
     const mediaStreamRef = useRef(null);
@@ -222,10 +223,10 @@ function Overlay() {
             <div
                 className="toolbar-content"
                 onMouseEnter={() => setIsExpanded(true)}
-                onMouseLeave={() => setIsExpanded(false)}
+                onMouseLeave={() => { if (!isDragging) setIsExpanded(false); }}
             >
                 {/* Collapsed / Base content: record + timer block */}
-                <div className="recorder-pill">
+                <div className={`recorder-pill ${isExpanded ? "expanded" : ""}`}>
                     <button
                         className={`record-toggle ${isRecording ? "recording" : "idle"}`}
                         onClick={onRecordPress}
@@ -236,18 +237,29 @@ function Overlay() {
                     <span className="timer-text">{formatTime(isRecording ? elapsedMs : 0)}</span>
                 </div>
 
-                {/* Expanded-only actions */}
-                {isExpanded && (
-                    <div className="expanded-actions">
-                        <button className="icon-btn lg" title="Home" onClick={goHome}>
-                            <Home size={18} />
-                        </button>
-                        {/* Drag handle */}
-                        <div className="drag-handle" data-tauri-drag-region aria-label="Drag">
-                            <GripVertical size={16} />
-                        </div>
+                {/* Expanded-only actions (always present for animation) */}
+                <div className={`expanded-actions ${isExpanded ? "show" : ""}`}>
+                    <button className="icon-btn lg" title="Home" onClick={goHome}>
+                        <Home size={18} />
+                    </button>
+                    {/* Drag handle */}
+                    <div
+                        className="drag-handle"
+                        data-tauri-drag-region
+                        aria-label="Drag"
+                        onMouseDown={() => {
+                            setIsDragging(true);
+                            setIsExpanded(true);
+                            const onUp = () => {
+                                setIsDragging(false);
+                                window.removeEventListener("mouseup", onUp);
+                            };
+                            window.addEventListener("mouseup", onUp);
+                        }}
+                    >
+                        <GripVertical size={16} />
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
