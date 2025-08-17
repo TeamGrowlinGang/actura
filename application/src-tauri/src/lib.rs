@@ -8,8 +8,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound;
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
 #[cfg(desktop)]
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_opener::OpenerExt;
@@ -226,35 +227,48 @@ pub fn run() {
                 let last_click = Arc::new(StdMutex::new(Instant::now() - Duration::from_secs(1)));
                 let last_click_closure = last_click.clone();
 
-                let mut tray_builder = TrayIconBuilder::new().tooltip("Actura").on_tray_icon_event(
-                    move |tray, event| match event {
-                        TrayIconEvent::Click { .. } => {
-                            // Debounce to avoid double toggle on some platforms
-                            let now = Instant::now();
-                            if let Ok(mut prev) = last_click_closure.lock() {
-                                if now.duration_since(*prev) < Duration::from_millis(300) {
-                                    return;
-                                }
-                                *prev = now;
-                            }
+                // Build a simple tray context menu with a Quit option
+                let quit_item = MenuItemBuilder::new("Quit").id("quit").build(app)?;
+                let tray_menu = MenuBuilder::new(app).items(&[&quit_item]).build()?;
 
-                            let app = tray.app_handle();
-                            let state = app.state::<SharedMeetingState>();
-                            let mut guard = state.lock().unwrap();
-                            guard.in_meeting = !guard.in_meeting;
-                            if let Some(overlay) = app.get_webview_window("overlay") {
-                                let _ = overlay.emit("meeting-state", &*guard);
-                                if guard.in_meeting {
-                                    let _ = overlay.show();
-                                    let _ = overlay.set_focus();
-                                } else {
-                                    let _ = overlay.hide();
+                let mut tray_builder = TrayIconBuilder::new()
+                    .tooltip("Actura")
+                    .menu(&tray_menu)
+                    .on_menu_event(|tray, event| {
+                        if event.id().as_ref() == "quit" {
+                            tray.app_handle().exit(0);
+                        }
+                    })
+                    .on_tray_icon_event(move |tray, event| match event {
+                        TrayIconEvent::Click { button, .. } => {
+                            // Only toggle on left click; right-click is handled by OS to show context menu
+                            if button == MouseButton::Left {
+                                // Debounce to avoid double toggle on some platforms
+                                let now = Instant::now();
+                                if let Ok(mut prev) = last_click_closure.lock() {
+                                    if now.duration_since(*prev) < Duration::from_millis(300) {
+                                        return;
+                                    }
+                                    *prev = now;
+                                }
+
+                                let app = tray.app_handle();
+                                let state = app.state::<SharedMeetingState>();
+                                let mut guard = state.lock().unwrap();
+                                guard.in_meeting = !guard.in_meeting;
+                                if let Some(overlay) = app.get_webview_window("overlay") {
+                                    let _ = overlay.emit("meeting-state", &*guard);
+                                    if guard.in_meeting {
+                                        let _ = overlay.show();
+                                        let _ = overlay.set_focus();
+                                    } else {
+                                        let _ = overlay.hide();
+                                    }
                                 }
                             }
                         }
                         _ => {}
-                    },
-                );
+                    });
 
                 if let Some(icon) = app.default_window_icon() {
                     tray_builder = tray_builder.icon(icon.clone());
@@ -270,11 +284,15 @@ pub fn run() {
             } else {
                 println!("Registered global shortcut: Ctrl+M");
             }
-            // Ensure overlay reflects initial state, don't force visible
+            // Ensure overlay reflects initial state and is shown if in_meeting
             if let Some(overlay) = app.handle().get_webview_window("overlay") {
                 let state = app.state::<SharedMeetingState>();
                 let guard = state.lock().unwrap();
                 let _ = overlay.emit("meeting-state", &*guard);
+                if guard.in_meeting {
+                    let _ = overlay.show();
+                    let _ = overlay.set_focus();
+                }
             }
             Ok(())
         })
