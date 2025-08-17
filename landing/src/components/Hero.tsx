@@ -1,8 +1,11 @@
 import { FiChevronRight } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
-import JiraLogo from '../assets/Jira.svg'
-import NotionLogo from '../assets/Notion.svg'
-import ZoomLogo from '../assets/Zoom.svg'
+import DiscordLogo from '../assets/Icons/Discord.svg'
+import CalendarLogo from '../assets/Icons/Calendar.svg'
+import GroupFiveLogo from '../assets/Icons/Group 5.svg'
+import TeamsLogo from '../assets/Icons/Teams.svg'
+import NotionLogo from '../assets/Icons/Notion.svg'
+import ZoomLogo from '../assets/Icons/Zoom.svg'
 import desktopImage from '../assets/desktop image.png'
 import { useEffect, useState } from 'react'
 
@@ -78,18 +81,33 @@ export function Hero() {
 
           <div className="mt-16 md:mt-8 lg:mt-4 xl:mt-10 mb-10 md:mb-12 lg:mb-14 flex items-center justify-center gap-5 fade-in-up fade-in-up-3">
             <img
+              src={DiscordLogo}
+              alt="Discord"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+            />
+            <img
+              src={TeamsLogo}
+              alt="Teams"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+            />
+            <img
               src={ZoomLogo}
               alt="Zoom"
               className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
             <img
-              src={NotionLogo}
-              alt="Notion"
+              src={GroupFiveLogo}
+              alt="Group 5"
               className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
             <img
-              src={JiraLogo}
-              alt="Jira"
+              src={CalendarLogo}
+              alt="Calendar"
+              className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
+            />
+            <img
+              src={NotionLogo}
+              alt="Notion"
               className="h-16 w-auto sm:h-[64px] md:h-[72px] transition-transform duration-200 ease-out hover:scale-110 hover:-translate-y-0.5"
             />
           </div>
