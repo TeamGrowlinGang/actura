@@ -55,7 +55,7 @@ export function Hero() {
     <section className="relative hero-fade">
       <div className="site-container">
         <div className="mx-auto max-w-5xl px-6 pb-24 pt-20 text-center md:pt-28">
-          <h1 className="text-balance text-5xl font-extrabold tracking-tight md:text-7xl font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif] fade-in-up">
+          <h1 className="text-balance text-5xl md:text-7xl font-display font-semibold tracking-tight fade-in-up">
             <span>{firstLine.slice(0, firstProgress)}</span>
             <span className="block">
               {phrases[phraseIndex].slice(0, secondProgress)}
@@ -79,7 +79,7 @@ export function Hero() {
             </Link>
           </div>
 
-          <div className="mt-16 md:mt-8 lg:mt-4 xl:mt-10 mb-10 md:mb-12 lg:mb-14 flex items-center justify-center gap-5 fade-in-up fade-in-up-3">
+          <div className="mt-12 sm:mt-10 md:mt-8 lg:mt-6 xl:mt-10 mb-10 md:mb-12 lg:mb-14 flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 gap-y-3 fade-in-up fade-in-up-3">
             <img
               src={DiscordLogo}
               alt="Discord"
