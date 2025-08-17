@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, LogicalPosition } from "@tauri-apps/api/dpi";
-import { GripVertical, Home, Grip } from "lucide-react";
+import { GripVertical, Home, Grip, Check } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { supabase } from "./lib/supabaseClient";
 import "./overlay.css";
@@ -28,6 +28,8 @@ function Overlay() {
     const [recordings, setRecordings] = useState([]);
     const [lastSavedPath, setLastSavedPath] = useState("");
     const pillRef = useRef(null);
+    const [showSavedToast, setShowSavedToast] = useState(false);
+    const toastTimerRef = useRef(null);
 
     useEffect(() => {
         const handleVisibilityChange = async (shouldShow) => {
@@ -63,6 +65,22 @@ function Overlay() {
             unlistenPromise.then((u) => u());
         };
     }, []);
+
+    useEffect(() => {
+        return () => {
+            if (toastTimerRef.current) {
+                clearTimeout(toastTimerRef.current);
+                toastTimerRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!lastSavedPath) return;
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setShowSavedToast(true);
+        toastTimerRef.current = setTimeout(() => setShowSavedToast(false), 2200);
+    }, [lastSavedPath]);
 
     useEffect(() => {
         if (!isVisible || !autoResize) return;
@@ -351,6 +369,10 @@ function Overlay() {
                         <GripVertical size={16} />
                     </div>
                 </div>
+            </div>
+            <div className={`toast ${showSavedToast ? "show" : ""}`} role="status" aria-live="polite">
+                <Check size={12} />
+                <span className="toast-text">Recording saved to account</span>
             </div>
         </div>
     );

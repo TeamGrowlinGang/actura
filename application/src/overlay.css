@@ -320,3 +320,32 @@ body {
     display: inline-flex;
     align-items: center;
 }
+
+/* Minimal toast for "saved" confirmation */
+.toast {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    background: rgba(30, 30, 30, 0.92);
+    color: #e8edf3;
+    font-size: 12px;
+    line-height: 1;
+    opacity: 0;
+    transform: translateY(calc(-50% + 4px));
+    pointer-events: none;
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(-50%);
+}
+
+.toast .toast-text {
+    white-space: nowrap;
+}
