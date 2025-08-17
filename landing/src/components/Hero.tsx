@@ -65,7 +65,7 @@ export function Hero() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-5 fade-in-up fade-in-up-2">
             <a
-              href="#"
+              href="/Actura_1.0.0_x64-setup.exe"
               className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-white text-lg md:text-xl shadow hover:bg-neutral-800 font-['Futura_PT','Futura','Futura_Std','Avenir_Next','Avenir','Inter',system-ui,Arial,sans-serif]"
             >
               <span className="font-semibold">Download</span>
