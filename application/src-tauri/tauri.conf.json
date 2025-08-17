@@ -32,7 +32,8 @@
         "active": true,
         "targets": "all",
         "icon": [
-            "icons/logo-256.ico"
+            "icons/logo-256.ico",
+            "icons/logo.png"
         ]
     }
 }
