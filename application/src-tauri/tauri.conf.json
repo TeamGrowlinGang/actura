@@ -24,7 +24,7 @@
                 "skipTaskbar": true,
                 "shadow": false,
                 "visible": true,
-                "url": "http://localhost:1420/overlay.html"
+                "url": "overlay.html"
             }
         ]
     },
@@ -32,7 +32,8 @@
         "active": true,
         "targets": "all",
         "icon": [
-            "icons/logo-256.ico"
+            "icons/logo-256.ico",
+            "icons/logo.png"
         ]
     }
 }

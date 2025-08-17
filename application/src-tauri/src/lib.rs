@@ -91,7 +91,7 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 fn open_home(app: tauri::AppHandle) -> Result<(), String> {
     app.opener()
-        .open_url("https://www.google.com", None::<String>)
+        .open_url("https://actura.tech/profile", None::<String>)
         .map_err(|e| e.to_string())
 }
 
