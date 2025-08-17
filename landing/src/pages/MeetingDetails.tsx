@@ -83,6 +83,7 @@ export function MeetingDetails() {
               type="button"
               onClick={async () => {
                 setSending(true)
+                const startedAt = performance.now()
                 try {
                   const base = (import.meta as any).env.VITE_N8N_URL as string
                   const secret = (import.meta as any).env.VITE_N8N_SECRET as string | undefined
@@ -98,7 +99,10 @@ export function MeetingDetails() {
                 } catch (err) {
                   console.error('Failed to request Notion export', err)
                 } finally {
-                  setSending(false)
+                  const elapsed = performance.now() - startedAt
+                  const minimumMs = 1200
+                  const remaining = Math.max(0, minimumMs - elapsed)
+                  window.setTimeout(() => setSending(false), remaining)
                 }
               }}
               className="inline-flex items-center justify-self-end justify-center gap-2 rounded-lg bg-[#2a74ff] px-3 py-2 font-semibold text-white shadow hover:bg-brand-dark md:row-start-1 md:col-start-2"
