@@ -1,5 +1,5 @@
 ## Actura – AI meeting copilot for transcripts, actions, and sync
----
+
 ### Inspiration
 Are you tired of wasting hours writing meeting minutes, turning them into action items, and organising them into kanban boards? Actura cuts the noise, skips the overhead, and lets you get back to the part of your work you actually enjoy.
 
