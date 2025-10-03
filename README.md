@@ -1,7 +1,97 @@
-# Tauri + React
+## Actura – AI meeting copilot for transcripts, actions, and sync
 
-This template should help get you started developing with Tauri and React in Vite.
+Actura is a desktop copilot that captures meetings with consent, produces clean multi-language transcripts with speaker diarization, extracts decisions and action items, and syncs them to your workspace tools. A compact, always-on-top overlay provides just‑enough controls and context in-call, while a global shortcut and tray controls keep the app out of the way until you need it. The pipeline is resilient to offline use: we capture locally and retry uploads so nothing gets lost. Submitted to FoundersHack.
 
-## Recommended IDE Setup
+Under the hood, Actura is a Tauri (Rust + WebView) desktop app with a React overlay UI and n8n-powered AI workflows for transcription and task extraction. Supabase handles authentication, storage, and meeting metadata. A separate React/TypeScript/Tailwind landing site ships a Windows installer and product info.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+### Technologies used
+- **Desktop app**: Tauri v2 (Rust), `tauri`, `tauri-plugin-global-shortcut`, `tauri-plugin-opener`, system tray/menu, global shortcuts
+- **Audio**: `cpal` for capture, `hound` for WAV; browser `MediaRecorder` with WebAudio mix (mic + system)
+- **Frontend (app overlay)**: React 19, Vite, Tailwind 4, Lucide icons
+- **Backend/workflows**: n8n (Docker) for transcription + task extraction and syncing to tools
+- **Storage/Auth/Data**: Supabase (`@supabase/supabase-js`) for user profiles, metadata, and recordings storage
+- **Landing site**: React + TypeScript + Tailwind + Vite
+- **Packaging**: Windows installer (distributed on the landing site)
+
+---
+
+### Inspiration
+Are you tired of wasting hours writing meeting minutes, turning them into action items, and organising them into kanban boards? Actura cuts the noise, skips the overhead, and lets you get back to the part of your work you actually enjoy.
+
+### What it does
+With consent, Actura records your meetings and produces transcripts. It extracts actionable tasks and decisions, then syncs them to your workspace tools. An always‑on‑top overlay offers quick controls and context, and a global shortcut toggles visibility. The app captures tasks offline and syncs automatically when you reconnect.
+
+### How we built it
+- Desktop powered by Tauri (Rust + WebView) for a tiny, secure footprint. Rust handles tray, context menu, global shortcuts, and low‑level audio capture (`cpal`, `hound`) to save audio (WAV/WebM). On the overlay, we also mix mic + system audio via WebAudio and record with `MediaRecorder` where supported.
+- n8n automates transcription and task extraction, then syncs back into workspace tools.
+- Supabase stores user profiles and meeting metadata, and provides auth + storage for recordings.
+- Landing site built with React/TypeScript/Tailwind and distributes a Windows installer. On Windows, left‑click on tray toggles overlay; right‑click opens a context menu with a real Quit.
+
+### Team
+- [Bonsen Wakjira](https://github.com/BonsenW)
+- [Zahir Hassan](https://github.com/WalrusPSD)
+- [Jia Wen Ooi](https://github.com/jiawen001)
+- [Anika Ojha](https://github.com/anika-ojha)
+
+---
+
+## Getting started
+
+### Prerequisites
+- Node 18+ and pnpm/npm
+- Rust toolchain (stable) and Tauri prerequisites for your OS
+- Docker (for n8n workflows)
+- Supabase project (URL + anon key)
+
+### Environment variables
+Create a `.env` (or `.env.local`) in `application/` and `landing/` with:
+```
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+For Docker n8n, set an encryption key in your shell or `.env` in repo root:
+```
+N8N_ENCRYPTION_KEY=replace-with-a-strong-secret
+```
+
+### Run the desktop app (Tauri)
+```bash
+cd application
+npm install
+npm run dev
+# In another terminal, run the Tauri dev build if needed
+npm run tauri dev
+```
+
+### Run the landing site
+```bash
+cd landing
+npm install
+npm run dev
+```
+
+### Start n8n (transcription/task workflows)
+```bash
+docker compose up -d
+# n8n will be available at http://localhost:5678
+```
+
+> Note: Example n8n flows were previously stored under `n8n/` and may be re-imported into your n8n instance as needed.
+
+---
+
+## Project structure
+- `application/`: Tauri v2 desktop app
+  - `src/overlay.jsx`: React overlay and recording UI (+ Supabase upload)
+  - `src/components/recorder.jsx`: simple invoke-driven recorder
+  - `src/lib/supabaseClient.js`: Supabase client
+  - `src-tauri/`: Rust sources (`tauri`, tray, global shortcuts, audio libs)
+- `landing/`: React + TypeScript + Tailwind marketing site
+- `docker-compose.yml`: n8n for workflow automation
+
+## Scripts (high-level)
+- App: `npm run dev`, `npm run build`, `npm run preview`, `npm run tauri`
+- Landing: `npm run dev`, `npm run build`, `npm run preview`, `npm run lint`
+
+## License
+Proprietary – all rights reserved unless otherwise noted.
