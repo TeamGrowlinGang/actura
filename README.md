@@ -1,8 +1,10 @@
 ## Actura – AI meeting copilot for transcripts, actions, and sync
+---
+### Inspiration
+Are you tired of wasting hours writing meeting minutes, turning them into action items, and organising them into kanban boards? Actura cuts the noise, skips the overhead, and lets you get back to the part of your work you actually enjoy.
 
-Actura is a desktop copilot that captures meetings with consent, produces clean multi-language transcripts with speaker diarization, extracts decisions and action items, and syncs them to your workspace tools. A compact, always-on-top overlay provides just‑enough controls and context in-call, while a global shortcut and tray controls keep the app out of the way until you need it. The pipeline is resilient to offline use: we capture locally and retry uploads so nothing gets lost. Submitted to FoundersHack.
-
-Under the hood, Actura is a Tauri (Rust + WebView) desktop app with a React overlay UI and n8n-powered AI workflows for transcription and task extraction. Supabase handles authentication, storage, and meeting metadata. A separate React/TypeScript/Tailwind landing site ships a Windows installer and product info.
+### What it does
+With consent, Actura records your meetings and produces transcripts. It extracts actionable tasks and decisions, then syncs them to your workspace tools. An always‑on‑top overlay offers quick controls and context, and a global shortcut toggles visibility. The app captures tasks offline and syncs automatically when you reconnect.
 
 ### Technologies used
 - **Desktop app**: Tauri v2 (Rust), `tauri`, `tauri-plugin-global-shortcut`, `tauri-plugin-opener`, system tray/menu, global shortcuts
@@ -12,20 +14,6 @@ Under the hood, Actura is a Tauri (Rust + WebView) desktop app with a React over
 - **Storage/Auth/Data**: Supabase (`@supabase/supabase-js`) for user profiles, metadata, and recordings storage
 - **Landing site**: React + TypeScript + Tailwind + Vite
 - **Packaging**: Windows installer (distributed on the landing site)
-
----
-
-### Inspiration
-Are you tired of wasting hours writing meeting minutes, turning them into action items, and organising them into kanban boards? Actura cuts the noise, skips the overhead, and lets you get back to the part of your work you actually enjoy.
-
-### What it does
-With consent, Actura records your meetings and produces transcripts. It extracts actionable tasks and decisions, then syncs them to your workspace tools. An always‑on‑top overlay offers quick controls and context, and a global shortcut toggles visibility. The app captures tasks offline and syncs automatically when you reconnect.
-
-### How we built it
-- Desktop powered by Tauri (Rust + WebView) for a tiny, secure footprint. Rust handles tray, context menu, global shortcuts, and low‑level audio capture (`cpal`, `hound`) to save audio (WAV/WebM). On the overlay, we also mix mic + system audio via WebAudio and record with `MediaRecorder` where supported.
-- n8n automates transcription and task extraction, then syncs back into workspace tools.
-- Supabase stores user profiles and meeting metadata, and provides auth + storage for recordings.
-- Landing site built with React/TypeScript/Tailwind and distributes a Windows installer. On Windows, left‑click on tray toggles overlay; right‑click opens a context menu with a real Quit.
 
 ### Team
 - [Bonsen Wakjira](https://github.com/BonsenW)
